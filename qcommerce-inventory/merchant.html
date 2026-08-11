@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basics Box | Inventory & Profit Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div>
+                <h2>Basics Box</h2>
+                <p>Inventory System</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="merchant.html" class="nav-item active">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="pages/products.html" class="nav-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="pages/buy.html" class="nav-item">
+                <i class="fas fa-cart-plus"></i>
+                <span>Buy Stock</span>
+            </a>
+            <a href="pages/sell.html" class="nav-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Sell Stock</span>
+            </a>
+            <a href="pages/reports.html" class="nav-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="page-heading">
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">A live overview of your business</p>
+            </div>
+            <div class="header-right">
+                <div class="header-greeting">
+                    <span class="greeting">Welcome back!</span>
+                    <span class="date" id="current-date"></span>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn btn-secondary logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- PROFIT HIGHLIGHT SECTION -->
+        <section class="profit-highlight">
+            <div class="profit-main">
+                <div class="profit-label">Total Profit Earned</div>
+                <div class="profit-amount" id="total-profit">₹0.00</div>
+                <div class="profit-change positive">+0% from last period</div>
+            </div>
+            <div class="profit-side">
+                <div class="profit-box">
+                    <span>Today's Profit</span>
+                    <strong id="today-profit">₹0.00</strong>
+                </div>
+                <div class="profit-box">
+                    <span>Profit Margin</span>
+                    <strong id="profit-margin">0%</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Grid -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Sales</h4>
+                    <p id="total-sales">₹0.00</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Stock Value</h4>
+                    <p id="stock-value">₹0.00</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Products</h4>
+                    <p id="total-products">0</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="stat-info">
+                    <h4>Total Orders</h4>
+                    <p id="total-orders">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Low Stock + Recent Transactions -->
+        <div class="dash-grid">
+
+            <!-- Low Stock Alerts -->
+            <section class="card low-stock-card" id="lowStockCard">
+                <div class="card-header">
+                    <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger); margin-right: 8px;"></i>Low Stock Alerts</h3>
+                    <span class="badge badge-purchase" id="lowStockCount">0</span>
+                </div>
+                <div class="card-body">
+                    <div id="lowStockList">
+                        <p class="empty-text">All products are sufficiently stocked.</p>
+                        </div>
+                </div>
+            </section>
+
+            <!-- Recent Transactions -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Recent Transactions</h3>
+                </div>
+                <div class="card-body" id="recent-transactions">
+                    <p class="empty-text">No transactions yet. Start by adding products and recording buys/sells.</p>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

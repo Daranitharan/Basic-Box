@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Basics Box</title>
+    <link rel="stylesheet" href="qcommerce-inventory/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="auth-page">
+
+    <main class="auth-wrap">
+        <!-- Left brand panel -->
+        <section class="auth-brand">
+            <div class="auth-brand-inner">
+                <div class="brand-chip large">BB</div>
+                <h1>Basics Box</h1>
+                <p class="auth-tagline">Inventory & Profit Tracker</p>
+                <blockquote class="auth-quote">
+                    "Track stock. Watch profit. Grow with confidence."
+                </blockquote>
+            </div>
+        </section>
+
+        <!-- Right form panel -->
+        <section class="auth-form-side">
+            <button class="theme-toggle auth-theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            <div class="auth-form-card">
+                <h2>Welcome back</h2>
+                <p class="auth-sub">Log in to your Basics Box account</p>
+
+                <form id="loginForm" novalidate>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Your password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-submit">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+
+                <p class="auth-switch">
+                    Don't have an account?
+                    <a href="register.html">Create one</a>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script src="qcommerce-inventory/js/storage.js"></script>
+    <script src="qcommerce-inventory/js/toast.js"></script>
+    <script src="qcommerce-inventory/js/theme.js"></script>
+    <script src="qcommerce-inventory/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!email || !password) {
+                    showToast('Please fill in both fields.', 'error');
+                    return;
+                }
+
+                const result = loginUser(email, password);
+
+                if (result.ok) {
+                    showToast('Welcome back, ' + result.user.name + '!', 'success');
+                    setTimeout(() => window.location.href = 'qcommerce-inventory/merchant.html', 700);
+                } else {
+                    showToast(result.error, 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

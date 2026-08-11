@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Stock | Basics Box</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div>
+                <h2>Basics Box</h2>
+                <p>Inventory System</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="../merchant.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="nav-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="buy.html" class="nav-item">
+                <i class="fas fa-cart-plus"></i>
+                <span>Buy Stock</span>
+            </a>
+            <a href="sell.html" class="nav-item active">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Sell Stock</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <header class="top-header">
+            <div class="page-heading">
+                <h1 class="page-title">Sell Stock</h1>
+                <p class="page-subtitle">Record sales and track profit</p>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid-2">
+            <!-- Sell Form -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Record Sale</h3>
+                </div>
+                <div class="card-body">
+                    <form id="sellForm">
+                        <div class="form-group">
+                            <label>Select Product *</label>
+                            <select id="productSelect" required>
+                                <option value="">-- Select Product --</option>
+                            </select>
+                            <p class="form-hint" id="stockHint"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" id="quantity" min="1" required placeholder="Enter quantity">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Selling Price (per unit) *</label>
+                            <input type="number" id="sellingPrice" min="0" step="0.01" required placeholder="e.g. 30.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Total Amount</label>
+                            <input type="text" id="totalAmount" readonly placeholder="₹0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Estimated Profit</label>
+                            <input type="text" id="estimatedProfit" readonly placeholder="₹0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Customer (optional)</label>
+                            <input type="text" id="customer" placeholder="Customer name">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notes (optional)</label>
+                            <textarea id="notes" rows="2" placeholder="Any notes..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-check"></i> Save Sale
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Recent Sales -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Recent Sales</h3>
+                </div>
+                <div class="card-body">
+                    <div id="recentSales">
+                        <p class="empty-text">No sales recorded yet.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/sell.js"></script>
+</body>
+</html>
