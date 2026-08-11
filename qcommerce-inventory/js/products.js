@@ -9,7 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('productsTableBody');
     const noProductsMsg = document.getElementById('noProductsMsg');
 
+    const viewBtns = document.querySelectorAll('.view-btn');
+    const tableView = document.getElementById('tableView');
+    const gridView = document.getElementById('gridView');
+
+    const allowedViews = ['table', 'grid', 'compact'];
+    let currentView = Storage.get('products-view') || 'table';
+    if (!allowedViews.includes(currentView)) currentView = 'table';
     let editId = null;
+
+    // Initialize view switcher
+    function initViewSwitcher() {
+        viewBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === currentView);
+            btn.addEventListener('click', () => {
+                currentView = btn.dataset.view;
+                if (!allowedViews.includes(currentView)) currentView = 'table';
+                Storage.set('products-view', currentView);
+                viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+                loadProducts();
+            });
+        });
+    }
+
+    initViewSwitcher();
 
     // Load products when page opens
     loadProducts();
@@ -59,13 +82,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadProducts() {
         const products = Storage.get('products') || [];
         tableBody.innerHTML = '';
+        gridView.innerHTML = '';
 
         if (products.length === 0) {
             noProductsMsg.style.display = 'block';
+            tableView.classList.add('hidden');
+            gridView.classList.add('hidden');
             return;
         }
 
         noProductsMsg.style.display = 'none';
+
+        if (currentView === 'table') {
+            tableView.classList.remove('hidden');
+            gridView.classList.add('hidden');
+        } else {
+            tableView.classList.add('hidden');
+            gridView.classList.remove('hidden');
+            gridView.classList.toggle('compact', currentView === 'compact');
+        }
 
         products.forEach(product => {
             const stock = product.stock || 0;
@@ -97,31 +132,63 @@ document.addEventListener('DOMContentLoaded', () => {
             const barMax = minStock > 0 ? minStock * 3 : Math.max(stock, 10);
             const barPercent = Math.min((stock / barMax) * 100, 100);
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${product.sku}</td>
-                <td>${product.name}</td>
-                <td>${product.unit}</td>
-                <td>
-                    <div class="stock-cell">
-                        <span class="stock-badge ${badgeClass}">
-                            <i class="fas ${badgeIcon}"></i>
-                            ${badgeLabel}
-                        </span>
+            if (currentView === 'table') {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${product.sku}</td>
+                    <td>${product.name}</td>
+                    <td>${product.unit}</td>
+                    <td>
+                        <div class="stock-cell">
+                            <span class="stock-badge ${badgeClass}">
+                                <i class="fas ${badgeIcon}"></i>
+                                ${badgeLabel}
+                            </span>
+                            ${minStock > 0 ? `
+                            <div class="stock-bar-wrap">
+                                <div class="stock-bar ${barClass}" style="width: ${barPercent}%"></div>
+                            </div>
+                            <span class="stock-min-label">Min: ${minStock} ${product.unit}</span>
+                            ` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            } else {
+                const card = document.createElement('div');
+                card.className = currentView === 'compact' ? 'product-card compact' : 'product-card';
+                card.innerHTML = `
+                    <div class="product-card-header">
+                        <div>
+                            <h3 class="product-card-title">${product.name}</h3>
+                            <p class="product-card-subtitle">SKU ${product.sku}</p>
+                        </div>
+                        <span class="product-card-unit">${product.unit.toUpperCase()}</span>
+                    </div>
+                    <div class="product-card-stock">
+                        <div class="stock-summary">
+                            <span class="stock-badge ${badgeClass}">
+                                <i class="fas ${badgeIcon}"></i>
+                                ${badgeLabel}
+                            </span>
+                            ${minStock > 0 ? `<span class="stock-min-label">Min ${minStock} ${product.unit}</span>` : ''}
+                        </div>
                         ${minStock > 0 ? `
                         <div class="stock-bar-wrap">
                             <div class="stock-bar ${barClass}" style="width: ${barPercent}%"></div>
-                        </div>
-                        <span class="stock-min-label">Min: ${minStock} ${product.unit}</span>
-                        ` : ''}
+                        </div>` : ''}
                     </div>
-                </td>
-                <td>
-                    <button class="btn btn-edit" onclick="editProduct('${product.id}')">Edit</button>
-                    <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
+                    <div class="product-card-actions">
+                        <button class="btn btn-secondary" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </div>
+                `;
+                gridView.appendChild(card);
+            }
         });
     }
 
