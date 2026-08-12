@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editId = null;
         document.getElementById('modalTitle').textContent = 'Add New Product';
         form.reset();
+        if (window.setCategoryPicker) window.setCategoryPicker('');
         resetPreview();
         setFeedback('Scan or enter a barcode to lookup a product.');
         modal.classList.add('active');
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const currentStockValue = Number(document.getElementById('currentStock').value) || 0;
+            const currentStockValue = Number(existingProduct?.currentStock ?? existingProduct?.stock ?? 0);
             const product = {
                 id: editId || Date.now().toString(),
                 sku: document.getElementById('sku').value.trim(),
@@ -77,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: productName,
                 unit: document.getElementById('unit').value,
                 minStock: Number(document.getElementById('minStock').value) || 0,
-                openingStock: Number(document.getElementById('openingStock').value) || 0,
+                openingStock: existingProduct?.openingStock || 0,
                 currentStock: currentStockValue,
                 stock: currentStockValue,
                 supplier: document.getElementById('supplier').value.trim(),
@@ -130,11 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalTitle').textContent = 'Edit Product';
         document.getElementById('sku').value = product.sku || '';
         document.getElementById('category').value = product.category || '';
+        if (window.setCategoryPicker) window.setCategoryPicker(product.category || '');
         document.getElementById('name').value = product.name || '';
         document.getElementById('unit').value = product.unit || '';
         document.getElementById('minStock').value = product.minStock || 0;
-        document.getElementById('openingStock').value = product.openingStock || 0;
-        document.getElementById('currentStock').value = product.currentStock ?? product.stock ?? 0;
         document.getElementById('supplier').value = product.supplier || '';
         document.getElementById('barcode').value = product.barcode || '';
 

@@ -6,6 +6,159 @@
     <title>Products | Basics Box</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===== Custom Category Picker ===== */
+        .custom-category-picker {
+            position: relative;
+            width: 100%;
+        }
+
+        .category-picker-trigger {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            min-height: 46px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            text-align: left;
+        }
+
+        .category-picker-trigger:focus,
+        .category-picker-trigger.open {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .category-picker-arrow {
+            font-size: 0.75rem;
+            color: var(--text-faint);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .category-picker-arrow.rotated {
+            transform: rotate(180deg);
+        }
+
+        .category-picker-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            box-shadow: 0 16px 40px -12px rgba(10, 10, 16, 0.25);
+            z-index: 500;
+            overflow: hidden;
+            display: none;
+            animation: dropdownFade 0.18s ease both;
+        }
+
+        [data-theme="dark"] .category-picker-dropdown {
+            background: #14141c;
+            box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .category-picker-dropdown.open {
+            display: block;
+        }
+
+        @keyframes dropdownFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        .category-picker-list {
+            max-height: 210px; /* shows ~4.5 items then scroll */
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .category-picker-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .category-picker-list::-webkit-scrollbar-thumb {
+            background: var(--text-faint);
+            border-radius: 4px;
+        }
+
+        .category-option {
+            padding: 10px 14px;
+            border-radius: 9px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .category-option:first-child {
+            color: var(--text-faint);
+            font-style: italic;
+        }
+
+        .category-option i {
+            width: 22px;
+            text-align: center;
+            color: var(--accent);
+            font-size: 0.85rem;
+        }
+
+        .category-option:hover {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+
+        .category-option:hover i {
+            color: var(--accent-strong);
+        }
+
+        .category-option.selected {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            font-weight: 600;
+        }
+
+        .category-option.selected i {
+            color: var(--accent-strong);
+        }
+
+        /* scroll hint fade at bottom */
+        .category-picker-list-wrap {
+            position: relative;
+        }
+
+        .category-picker-list-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 28px;
+            background: linear-gradient(transparent, var(--card-bg-solid));
+            pointer-events: none;
+            border-radius: 0 0 14px 14px;
+        }
+
+        [data-theme="dark"] .category-picker-list-wrap::after {
+            background: linear-gradient(transparent, #14141c);
+        }
+    </style>
 </head>
 <body>
 
@@ -117,22 +270,35 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Category *</label>
-                        <select id="category" required>
-                            <option value="">Select Category</option>
-                            <option value="biscuit">Biscuit</option>
-                            <option value="juice">Juice</option>
-                            <option value="food">Food</option>
-                            <option value="cool drink">Cool Drink</option>
-                            <option value="vegetables">Vegetables</option>
-                            <option value="fruits">Fruits</option>
-                            <option value="medicines">Medicines</option>
-                            <option value="cleaning essential">Cleaning Essential</option>
-                            <option value="personal care">Personal Care</option>
-                            <option value="grocery items">Grocery Items</option>
-                            <option value="chips">Chips</option>
-                            <option value="chocolate">Chocolate</option>
-                            <option value="others">Others</option>
-                        </select>
+                        <!-- Hidden real select for form validation -->
+                        <select id="category" required style="display:none;"></select>
+                        <!-- Custom category picker -->
+                        <div class="custom-category-picker" id="categoryPicker">
+                            <button type="button" class="category-picker-trigger" id="categoryTrigger">
+                                <span id="categoryTriggerText">Select Category</span>
+                                <i class="fas fa-chevron-down category-picker-arrow" id="categoryArrow"></i>
+                            </button>
+                            <div class="category-picker-dropdown" id="categoryDropdown">
+                                <div class="category-picker-list-wrap">
+                                <div class="category-picker-list" id="categoryList">
+                                    <div class="category-option" data-value="">Select Category</div>
+                                    <div class="category-option" data-value="biscuit"><i class="fas fa-cookie-bite"></i> Biscuit</div>
+                                    <div class="category-option" data-value="juice"><i class="fas fa-glass-whiskey"></i> Juice</div>
+                                    <div class="category-option" data-value="food"><i class="fas fa-utensils"></i> Food</div>
+                                    <div class="category-option" data-value="cool drink"><i class="fas fa-mug-hot"></i> Cool Drink</div>
+                                    <div class="category-option" data-value="vegetables"><i class="fas fa-leaf"></i> Vegetables</div>
+                                    <div class="category-option" data-value="fruits"><i class="fas fa-apple-alt"></i> Fruits</div>
+                                    <div class="category-option" data-value="medicines"><i class="fas fa-pills"></i> Medicines</div>
+                                    <div class="category-option" data-value="cleaning essential"><i class="fas fa-spray-can"></i> Cleaning Essential</div>
+                                    <div class="category-option" data-value="personal care"><i class="fas fa-spa"></i> Personal Care</div>
+                                    <div class="category-option" data-value="grocery items"><i class="fas fa-shopping-basket"></i> Grocery Items</div>
+                                    <div class="category-option" data-value="chips"><i class="fas fa-fire"></i> Chips</div>
+                                    <div class="category-option" data-value="chocolate"><i class="fas fa-candy-cane"></i> Chocolate</div>
+                                    <div class="category-option" data-value="others"><i class="fas fa-box-open"></i> Others</div>
+                                </div>
+                                </div><!-- end list-wrap -->
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Unit *</label>
@@ -159,16 +325,7 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Opening Stock</label>
-                        <input type="number" id="openingStock" min="0" value="0" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Current Stock</label>
-                        <input type="number" id="currentStock" min="0" value="0" placeholder="0">
-                    </div>
-                </div>
+                <!-- Opening Stock and Current Stock removed -->
 
                 <div class="form-group">
                     <label>Product Image</label>
@@ -204,5 +361,72 @@
     <script src="../js/auth.js"></script>
     <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
     <script src="../js/products.js"></script>
+    <script>
+        // ===== Custom Category Picker Logic =====
+        (function() {
+            const trigger   = document.getElementById('categoryTrigger');
+            const dropdown  = document.getElementById('categoryDropdown');
+            const arrow     = document.getElementById('categoryArrow');
+            const triggerText = document.getElementById('categoryTriggerText');
+            const hiddenSelect = document.getElementById('category');
+            const options   = document.querySelectorAll('.category-option');
+
+            function openDropdown() {
+                dropdown.classList.add('open');
+                trigger.classList.add('open');
+                arrow.classList.add('rotated');
+            }
+
+            function closeDropdown() {
+                dropdown.classList.remove('open');
+                trigger.classList.remove('open');
+                arrow.classList.remove('rotated');
+            }
+
+            function setCategory(value, label) {
+                hiddenSelect.value = value;
+                triggerText.textContent = label || 'Select Category';
+                if (value) {
+                    triggerText.style.color = 'var(--text)';
+                    triggerText.style.fontStyle = 'normal';
+                } else {
+                    triggerText.style.color = 'var(--text-faint)';
+                    triggerText.style.fontStyle = 'italic';
+                }
+                options.forEach(o => o.classList.toggle('selected', o.dataset.value === value));
+            }
+
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const val  = opt.dataset.value;
+                    const text = opt.textContent.trim();
+                    setCategory(val, val ? text : 'Select Category');
+                    closeDropdown();
+                });
+            });
+
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+
+            // Expose setter so products.js can set category when editing
+            window.setCategoryPicker = function(value) {
+                const opt = document.querySelector(`.category-option[data-value="${value}"]`);
+                const label = opt ? opt.textContent.trim() : 'Select Category';
+                setCategory(value, value ? label : 'Select Category');
+            };
+
+            // Init placeholder style
+            setCategory('', '');
+        })();
+    </script>
 </body>
 </html>
