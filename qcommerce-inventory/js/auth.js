@@ -13,7 +13,7 @@ function saveUsers(users) {
 }
 
 // ---------- Registration ----------
-function registerUser(name, email, password) {
+function registerUser(name, email, password, profile) {
     const users = getUsers();
     const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -25,7 +25,8 @@ function registerUser(name, email, password) {
         id: Date.now().toString(),
         name: name.trim(),
         email: email.trim(),
-        password: password
+        password: password,
+        profile: profile || {}
     };
 
     users.push(user);

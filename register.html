@@ -32,15 +32,39 @@
 
                 <form id="registerForm" novalidate>
                     <div class="form-group auth-field-group">
-                        <label>Shop Name *</label>
-                        <i class="fas fa-store auth-field-icon"></i>
-                        <input type="text" id="name" placeholder="e.g. Fresh Mart" required>
+                        <label>User Name *</label>
+                        <i class="fas fa-user auth-field-icon"></i>
+                        <input type="text" id="name" placeholder="Your name" required>
                     </div>
 
                     <div class="form-group auth-field-group">
-                        <label>Phone Number *</label>
+                        <label>Shop Name *</label>
+                        <i class="fas fa-store auth-field-icon"></i>
+                        <input type="text" id="shopName" placeholder="e.g. Fresh Mart" required>
+                    </div>
+
+                    <div class="form-group auth-field-group">
+                        <label>Email *</label>
+                        <i class="fas fa-envelope auth-field-icon"></i>
+                        <input type="email" id="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-group auth-field-group">
+                        <label>Password *</label>
+                        <i class="fas fa-lock auth-field-icon"></i>
+                        <input type="password" id="password" placeholder="Your password" required>
+                    </div>
+
+                    <div class="form-group auth-field-group">
+                        <label>Confirm Password *</label>
+                        <i class="fas fa-lock auth-field-icon"></i>
+                        <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                    </div>
+
+                    <div class="form-group auth-field-group">
+                        <label>Phone Number</label>
                         <i class="fas fa-phone auth-field-icon"></i>
-                        <input type="tel" id="phone" placeholder="Enter phone number" required>
+                        <input type="tel" id="phone" placeholder="Enter phone number">
                     </div>
 
                     <div class="form-group auth-field-group">
@@ -86,12 +110,17 @@
                 e.preventDefault();
 
                 const name = document.getElementById('name').value.trim();
+                const shopName = document.getElementById('shopName').value.trim();
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
+                const phone = document.getElementById('phone').value.trim();
+                const address = document.getElementById('address').value.trim();
+                const upi = document.getElementById('upi').value.trim();
+                const gstin = document.getElementById('gstin').value.trim();
 
-                if (!name || !email || !password || !confirmPassword) {
-                    showToast('Please fill in all fields.', 'error');
+                if (!name || !shopName || !email || !password || !confirmPassword) {
+                    showToast('Please fill in all mandatory fields.', 'error');
                     return;
                 }
 
@@ -100,7 +129,15 @@
                     return;
                 }
 
-                const result = registerUser(name, email, password);
+                const profile = {
+                    shopName,
+                    phone,
+                    address,
+                    upi,
+                    gstin
+                };
+
+                const result = registerUser(name, email, password, profile);
                 if (!result.ok) {
                     showToast(result.error, 'error');
                     return;

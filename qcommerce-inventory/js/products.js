@@ -52,33 +52,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save product
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const productName = document.getElementById('name').value.trim();
         const existingProducts = Storage.get('products') || [];
         const existingProduct = editId ? existingProducts.find(p => p.id === editId) : null;
 
-        const product = {
-            id: editId || Date.now().toString(),
-            sku: document.getElementById('sku').value.trim(),
-            name: productName,
-            unit: document.getElementById('unit').value,
-            minStock: Number(document.getElementById('minStock').value) || 0,
-            stock: editId ? (existingProduct?.stock || 0) : 0,
-            image: existingProduct?.image || getProductImage(productName)
-        };
+        const imageInput = document.getElementById('productImageInput');
+        let imageData = existingProduct?.image || null;
 
-        let products = existingProducts;
+        function persistProduct() {
+            const product = {
+                id: editId || Date.now().toString(),
+                sku: document.getElementById('sku').value.trim(),
+                name: productName,
+                unit: document.getElementById('unit').value,
+                minStock: Number(document.getElementById('minStock').value) || 0,
+                stock: editId ? (existingProduct?.stock || 0) : 0,
+                image: imageData || existingProduct?.image || getProductImage(productName),
+                barcode: document.getElementById('barcode')?.value?.trim() || existingProduct?.barcode || ''
+            };
 
-        if (editId) {
-            products = products.map(p => p.id === editId ? { ...p, ...product } : p);
-        } else {
-            products.push(product);
+            let products = existingProducts;
+            if (editId) {
+                products = products.map(p => p.id === editId ? { ...p, ...product } : p);
+            } else {
+                products.push(product);
+            }
+
+            Storage.set('products', products);
+            modal.classList.remove('active');
+            loadProducts();
+            showToast(editId ? 'Product updated successfully!' : 'Product added successfully!', 'success');
         }
 
-        Storage.set('products', products);
-        modal.classList.remove('active');
-        loadProducts();
-        showToast(editId ? 'Product updated successfully!' : 'Product added successfully!', 'success');
+        if (imageInput && imageInput.files && imageInput.files[0]) {
+            const file = imageInput.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                imageData = reader.result;
+                persistProduct();
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        persistProduct();
     });
 
     function getProductImage(name) {
@@ -216,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('name').value = product.name;
         document.getElementById('unit').value = product.unit;
         document.getElementById('minStock').value = product.minStock;
+        document.getElementById('barcode').value = product.barcode || '';
         modal.classList.add('active');
     };
 
@@ -228,4 +246,61 @@ document.addEventListener('DOMContentLoaded', () => {
         loadProducts();
         showToast('Product deleted', 'info');
     };
+
+    const barcodeFile = document.getElementById('barcodeFile');
+    if (barcodeFile) {
+        barcodeFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result;
+                const barcodeInput = document.getElementById('barcode');
+                barcodeInput.value = '';
+
+                if (window.Quagga && Quagga.decodeSingle) {
+                    Quagga.decodeSingle({
+                        src: dataUrl,
+                        numOfWorkers: 0,
+                        decoder: {
+                            readers: [
+                                'code_128_reader',
+                                'ean_reader',
+                                'ean_8_reader',
+                                'code_39_reader',
+                                'upc_reader',
+                                'upc_e_reader'
+                            ]
+                        }
+                    }, (result) => {
+                        if (result && result.codeResult && result.codeResult.code) {
+                            barcodeInput.value = result.codeResult.code;
+                            showToast('Barcode decoded from image.', 'success');
+                        } else {
+                            barcodeInput.value = file.name.split('.')[0];
+                            showToast('Could not decode barcode image. Using filename placeholder.', 'warning');
+                        }
+                    });
+                } else {
+                    barcodeInput.value = file.name.split('.')[0];
+                    showToast('Barcode decode unavailable. Using filename placeholder.', 'warning');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const scanBtn = document.getElementById('scanBarcodeBtn');
+    if (scanBtn) {
+        scanBtn.addEventListener('click', () => {
+            const fileInput = document.getElementById('barcodeFile');
+            if (fileInput) {
+                fileInput.click();
+                showToast('Select or take a barcode photo to auto-decode in the form.', 'info');
+            } else {
+                alert('Barcode scanning requires image upload support. Please use the barcode field manually.');
+            }
+        });
+    }
 });
