@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
         editId = null;
         document.getElementById('modalTitle').textContent = 'Add New Product';
         form.reset();
+        resetPreview();
+        setFeedback('Scan or enter a barcode to lookup a product.');
         modal.classList.add('active');
     });
 
@@ -60,15 +62,31 @@ document.addEventListener('DOMContentLoaded', () => {
         let imageData = existingProduct?.image || null;
 
         function persistProduct() {
+            const barcodeValue = document.getElementById('barcode')?.value?.trim() || existingProduct?.barcode || '';
+            const existingBarcodeMatch = existingProducts.find(p => p.barcode === barcodeValue && p.id !== (existingProduct?.id || ''));
+            if (barcodeValue && existingBarcodeMatch) {
+                showToast('A product with this barcode already exists.', 'error');
+                return;
+            }
+
+            const currentStockValue = Number(document.getElementById('currentStock').value) || 0;
             const product = {
                 id: editId || Date.now().toString(),
                 sku: document.getElementById('sku').value.trim(),
+                category: document.getElementById('category').value.trim(),
                 name: productName,
                 unit: document.getElementById('unit').value,
                 minStock: Number(document.getElementById('minStock').value) || 0,
-                stock: editId ? (existingProduct?.stock || 0) : 0,
+                openingStock: Number(document.getElementById('openingStock').value) || 0,
+                currentStock: currentStockValue,
+                stock: currentStockValue,
+                expiryDate: document.getElementById('expiryDate').value || '',
+                mrp: Number(document.getElementById('mrp').value) || 0,
+                buyPrice: Number(document.getElementById('buyPrice').value) || 0,
+                sellPrice: Number(document.getElementById('sellPrice').value) || 0,
+                supplier: document.getElementById('supplier').value.trim(),
                 image: imageData || existingProduct?.image || getProductImage(productName),
-                barcode: document.getElementById('barcode')?.value?.trim() || existingProduct?.barcode || ''
+                barcode: barcodeValue
             };
 
             let products = existingProducts;
@@ -103,6 +121,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return `https://source.unsplash.com/featured/520x320/?${query}`;
     }
 
+    function resetPreview() {
+        const productImagePreview = document.getElementById('productImagePreview');
+        if (productImagePreview) {
+            productImagePreview.innerHTML = '<span>No image selected</span>';
+        }
+    }
+
+    function populateProductFields(product) {
+        if (!product) return;
+        editId = product.id;
+        document.getElementById('modalTitle').textContent = 'Edit Product';
+        document.getElementById('sku').value = product.sku || '';
+        document.getElementById('category').value = product.category || '';
+        document.getElementById('name').value = product.name || '';
+        document.getElementById('unit').value = product.unit || '';
+        document.getElementById('minStock').value = product.minStock || 0;
+        document.getElementById('openingStock').value = product.openingStock || 0;
+        document.getElementById('currentStock').value = product.currentStock ?? product.stock ?? 0;
+        document.getElementById('expiryDate').value = product.expiryDate || '';
+        document.getElementById('mrp').value = product.mrp || 0;
+        document.getElementById('buyPrice').value = product.buyPrice || 0;
+        document.getElementById('sellPrice').value = product.sellPrice || 0;
+        document.getElementById('supplier').value = product.supplier || '';
+        document.getElementById('barcode').value = product.barcode || '';
+
+        const productImagePreview = document.getElementById('productImagePreview');
+        if (product.image && productImagePreview) {
+            productImagePreview.innerHTML = `<img src="${product.image}" alt="Product preview">`;
+        } else {
+            resetPreview();
+        }
+
+        modal.classList.add('active');
+    }
+
     // Load and display products
     function loadProducts() {
         const products = Storage.get('products') || [];
@@ -128,8 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         products.forEach(product => {
-            const stock = product.stock || 0;
-            const minStock = product.minStock || 0;
+            const stock = Number(product.currentStock ?? product.stock ?? 0);
+            const minStock = Number(product.minStock ?? 0);
             const isOut = stock === 0;
             const isLow = !isOut && minStock > 0 && stock <= minStock;
             const isHealthy = !isOut && !isLow;
@@ -161,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${product.sku}</td>
+                    <td>${product.category || '-'}</td>
                     <td>${product.name}</td>
                     <td>${product.unit}</td>
                     <td>
@@ -226,15 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const products = Storage.get('products') || [];
         const product = products.find(p => p.id === id);
         if (!product) return;
-
-        editId = id;
-        document.getElementById('modalTitle').textContent = 'Edit Product';
-        document.getElementById('sku').value = product.sku;
-        document.getElementById('name').value = product.name;
-        document.getElementById('unit').value = product.unit;
-        document.getElementById('minStock').value = product.minStock;
-        document.getElementById('barcode').value = product.barcode || '';
-        modal.classList.add('active');
+        populateProductFields(product);
     };
 
     window.deleteProduct = function(id) {
@@ -248,59 +294,135 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const barcodeFile = document.getElementById('barcodeFile');
-    if (barcodeFile) {
-        barcodeFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+            const barcodeCameraInput = document.getElementById('barcodeCameraInput');
+            const uploadBarcodeBtn = document.getElementById('uploadBarcodeBtn');
+            const barcodeLookupFeedback = document.getElementById('barcodeLookupFeedback');
+            const barcodeInput = document.getElementById('barcode');
+            const productImageInput = document.getElementById('productImageInput');
+            const productImagePreview = document.getElementById('productImagePreview');
 
-            const reader = new FileReader();
-            reader.onload = () => {
-                const dataUrl = reader.result;
-                const barcodeInput = document.getElementById('barcode');
-                barcodeInput.value = '';
+            function setFeedback(message, type = 'info') {
+                barcodeLookupFeedback.textContent = message;
+                barcodeLookupFeedback.style.color = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--text-faint)';
+            }
 
-                if (window.Quagga && Quagga.decodeSingle) {
-                    Quagga.decodeSingle({
-                        src: dataUrl,
-                        numOfWorkers: 0,
-                        decoder: {
-                            readers: [
-                                'code_128_reader',
-                                'ean_reader',
-                                'ean_8_reader',
-                                'code_39_reader',
-                                'upc_reader',
-                                'upc_e_reader'
-                            ]
-                        }
-                    }, (result) => {
-                        if (result && result.codeResult && result.codeResult.code) {
-                            barcodeInput.value = result.codeResult.code;
-                            showToast('Barcode decoded from image.', 'success');
-                        } else {
-                            barcodeInput.value = file.name.split('.')[0];
-                            showToast('Could not decode barcode image. Using filename placeholder.', 'warning');
-                        }
-                    });
-                } else {
-                    barcodeInput.value = file.name.split('.')[0];
-                    showToast('Barcode decode unavailable. Using filename placeholder.', 'warning');
+            function resetPreview() {
+                if (productImagePreview) {
+                    productImagePreview.innerHTML = '<span>No image selected</span>';
                 }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+            }
 
-    const scanBtn = document.getElementById('scanBarcodeBtn');
-    if (scanBtn) {
-        scanBtn.addEventListener('click', () => {
-            const fileInput = document.getElementById('barcodeFile');
-            if (fileInput) {
-                fileInput.click();
-                showToast('Select or take a barcode photo to auto-decode in the form.', 'info');
-            } else {
-                alert('Barcode scanning requires image upload support. Please use the barcode field manually.');
+            function lookupBarcode(barcode) {
+                const products = Storage.get('products') || [];
+                if (!barcode) {
+                    setFeedback('Scan or enter a barcode to lookup a product.');
+                    return null;
+                }
+                const found = products.find(p => p.barcode === barcode);
+                if (found) {
+                    setFeedback('Product found. Loaded details for editing.', 'success');
+                    return found;
+                }
+                setFeedback('Product not found. You can add it now.');
+                return null;
+            }
+
+            if (productImageInput && productImagePreview) {
+                productImageInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) {
+                        resetPreview();
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        productImagePreview.innerHTML = `<img src="${reader.result}" alt="Product preview">`;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (barcodeInput) {
+                barcodeInput.addEventListener('blur', () => {
+                    const product = lookupBarcode(barcodeInput.value.trim());
+                    if (product) {
+                        populateProductFields(product);
+                    }
+                });
+            }
+
+            if (uploadBarcodeBtn && barcodeFile) {
+                uploadBarcodeBtn.addEventListener('click', () => {
+                    barcodeFile.click();
+                });
+            }
+
+            if (barcodeFile) {
+                barcodeFile.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const dataUrl = reader.result;
+                        if (window.Quagga && Quagga.decodeSingle) {
+                            setFeedback('Decoding barcode image...');
+                            Quagga.decodeSingle({
+                                src: dataUrl,
+                                numOfWorkers: 0,
+                                decoder: {
+                                    readers: [
+                                        'code_128_reader',
+                                        'ean_reader',
+                                        'ean_8_reader',
+                                        'upc_reader',
+                                        'upc_e_reader'
+                                    ]
+                                }
+                            }, (result) => {
+                                if (result && result.codeResult && result.codeResult.code) {
+                                    barcodeInput.value = result.codeResult.code;
+                                    const product = lookupBarcode(result.codeResult.code);
+                                    if (product) {
+                                        populateProductFields(product);
+                                    }
+                                } else {
+                                    setFeedback('Barcode not detected. Please enter it manually.', 'error');
+                                }
+                            });
+                        } else {
+                            setFeedback('Barcode decode unavailable. Please enter it manually.', 'error');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const scanBtn = document.getElementById('scanBarcodeBtn');
+            if (scanBtn) {
+                scanBtn.addEventListener('click', () => {
+                    if (barcodeCameraInput) {
+                        barcodeCameraInput.click();
+                        setFeedback('Use your camera to scan a barcode image.');
+                    } else if (barcodeFile) {
+                        barcodeFile.click();
+                        setFeedback('Select a barcode photo to decode.');
+                    } else {
+                        setFeedback('Camera scanning is not supported on this browser.', 'error');
+                    }
+                });
+            }
+
+            if (barcodeCameraInput) {
+                barcodeCameraInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (barcodeFile) {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        barcodeFile.files = dataTransfer.files;
+                        barcodeFile.dispatchEvent(new Event('change'));
+                    }
+                });
             }
         });
-    }
-});

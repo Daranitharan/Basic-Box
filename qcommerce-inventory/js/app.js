@@ -55,9 +55,10 @@ function updateDashboard() {
     let stockValue = 0;
     products.forEach(product => {
         const productPurchases = purchases.filter(p => p.productId === product.id);
+        const currentStockValue = product.currentStock ?? product.stock ?? 0;
         if (productPurchases.length > 0) {
             const latestPrice = productPurchases[0].purchasePrice; // most recent
-            stockValue += (product.stock || 0) * latestPrice;
+            stockValue += currentStockValue * latestPrice;
         }
     });
     animateValue(document.getElementById('stock-value'), stockValue, true, false);
@@ -157,7 +158,7 @@ function updateLowStockAlerts(products) {
     if (!listEl || !countEl) return;
 
     // Products at or below their minimum stock level
-    const lowStock = products.filter(p => (p.stock || 0) <= p.minStock);
+    const lowStock = products.filter(p => ((p.currentStock ?? p.stock ?? 0) <= p.minStock));
 
     countEl.textContent = lowStock.length;
 
@@ -168,7 +169,7 @@ function updateLowStockAlerts(products) {
 
     let html = '<ul class="low-stock-list">';
     lowStock.forEach(product => {
-        const stock = product.stock || 0;
+        const stock = product.currentStock ?? product.stock ?? 0;
         const isOut = stock === 0;
         const icon = isOut ? 'fa-box-open' : 'fa-boxes';
         const stockClass = isOut ? 'out' : 'low';

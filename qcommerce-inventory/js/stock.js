@@ -70,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        products[productIndex].stock = (products[productIndex].stock || 0) + quantity;
+        const currentStockValue = (products[productIndex].currentStock ?? products[productIndex].stock ?? 0) + quantity;
+        products[productIndex].currentStock = currentStockValue;
+        products[productIndex].stock = currentStockValue;
         Storage.set('products', products);
 
         const purchase = {
@@ -103,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedSaleProduct = products.find(p => p.id === productId) || null;
 
         if (selectedSaleProduct) {
-            stockHint.textContent = `Available stock: ${selectedSaleProduct.stock || 0} ${selectedSaleProduct.unit}`;
+            const availableStock = selectedSaleProduct.currentStock ?? selectedSaleProduct.stock ?? 0;
+            stockHint.textContent = `Available stock: ${availableStock} ${selectedSaleProduct.unit}`;
             const costPrice = getLatestPurchasePrice(selectedSaleProduct.id);
             if (costPrice > 0) {
                 stockHint.textContent += ` | Cost price: ₹${costPrice.toFixed(2)}`;
@@ -133,8 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Please enter a valid quantity', 'error');
             return;
         }
-        if (quantity > (selectedSaleProduct.stock || 0)) {
-            showToast(`Insufficient stock! Only ${selectedSaleProduct.stock} ${selectedSaleProduct.unit} available.`, 'error');
+        const availableSaleStock = selectedSaleProduct.currentStock ?? selectedSaleProduct.stock ?? 0;
+        if (quantity > availableSaleStock) {
+            showToast(`Insufficient stock! Only ${availableSaleStock} ${selectedSaleProduct.unit} available.`, 'error');
             return;
         }
 
@@ -145,7 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let products = Storage.get('products') || [];
         const productIndex = products.findIndex(p => p.id === productId);
         if (productIndex !== -1) {
-            products[productIndex].stock = (products[productIndex].stock || 0) - quantity;
+            const currentStockValue = (products[productIndex].currentStock ?? products[productIndex].stock ?? 0) - quantity;
+            products[productIndex].currentStock = currentStockValue;
+            products[productIndex].stock = currentStockValue;
             Storage.set('products', products);
         }
 
@@ -192,7 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
         saleProductSelect.innerHTML = '<option value="">-- Select Product --</option>';
 
         products.forEach(product => {
-            const displayText = `${product.name} (${product.sku}) - Stock: ${product.stock || 0}`;
+            const displayStock = product.currentStock ?? product.stock ?? 0;
+            const displayText = `${product.name} (${product.sku}) - Stock: ${displayStock}`;
             const purchaseOption = document.createElement('option');
             purchaseOption.value = product.id;
             purchaseOption.textContent = displayText;

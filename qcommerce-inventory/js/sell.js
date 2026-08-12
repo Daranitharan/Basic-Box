@@ -47,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedProduct = products.find(p => p.id === productId) || null;
 
         if (selectedProduct) {
-            stockHint.textContent = `Available stock: ${selectedProduct.stock || 0} ${selectedProduct.unit}`;
+            const displayStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
+            stockHint.textContent = `Available stock: ${displayStock} ${selectedProduct.unit}`;
             const costPrice = getLatestPurchasePrice(selectedProduct.id);
             if (costPrice > 0) {
                 stockHint.textContent += ` | Cost price: ₹${costPrice.toFixed(2)}`;
@@ -83,8 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (quantity > (selectedProduct.stock || 0)) {
-            showToast(`Insufficient stock! Only ${selectedProduct.stock} ${selectedProduct.unit} available.`, 'error');
+        const availableSaleStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
+        if (quantity > availableSaleStock) {
+            showToast(`Insufficient stock! Only ${availableSaleStock} ${selectedProduct.unit} available.`, 'error');
             return;
         }
 
@@ -96,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let products = Storage.get('products') || [];
         const productIndex = products.findIndex(p => p.id === productId);
         if (productIndex !== -1) {
-            products[productIndex].stock = (products[productIndex].stock || 0) - quantity;
+            const currentStockValue = (products[productIndex].currentStock ?? products[productIndex].stock ?? 0) - quantity;
+            products[productIndex].currentStock = currentStockValue;
+            products[productIndex].stock = currentStockValue;
             Storage.set('products', products);
         }
 
@@ -141,7 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
         products.forEach(product => {
             const option = document.createElement('option');
             option.value = product.id;
-            option.textContent = `${product.name} (${product.sku}) - Stock: ${product.stock || 0}`;
+            const displayStock = product.currentStock ?? product.stock ?? 0;
+            option.textContent = `${product.name} (${product.sku}) - Stock: ${displayStock}`;
             productSelect.appendChild(option);
         });
 

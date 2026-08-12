@@ -47,7 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Update stock
-        products[productIndex].stock = (products[productIndex].stock || 0) + quantity;
+        const currentStockValue = (products[productIndex].currentStock ?? products[productIndex].stock ?? 0) + quantity;
+        products[productIndex].currentStock = currentStockValue;
+        products[productIndex].stock = currentStockValue;
         Storage.set('products', products);
 
         // Save purchase record
@@ -84,7 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
         products.forEach(product => {
             const option = document.createElement('option');
             option.value = product.id;
-            option.textContent = `${product.name} (${product.sku}) - Stock: ${product.stock || 0}`;
+            const displayStock = product.currentStock ?? product.stock ?? 0;
+            option.textContent = `${product.name} (${product.sku}) - Stock: ${displayStock}`;
             productSelect.appendChild(option);
         });
     }
