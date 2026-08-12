@@ -53,22 +53,25 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const productName = document.getElementById('name').value.trim();
+        const existingProducts = Storage.get('products') || [];
+        const existingProduct = editId ? existingProducts.find(p => p.id === editId) : null;
+
         const product = {
             id: editId || Date.now().toString(),
             sku: document.getElementById('sku').value.trim(),
-            name: document.getElementById('name').value.trim(),
+            name: productName,
             unit: document.getElementById('unit').value,
             minStock: Number(document.getElementById('minStock').value) || 0,
-            stock: 0   // current stock starts at 0
+            stock: editId ? (existingProduct?.stock || 0) : 0,
+            image: existingProduct?.image || getProductImage(productName)
         };
 
-        let products = Storage.get('products') || [];
+        let products = existingProducts;
 
         if (editId) {
-            // Update existing
-            products = products.map(p => p.id === editId ? product : p);
+            products = products.map(p => p.id === editId ? { ...p, ...product } : p);
         } else {
-            // Add new
             products.push(product);
         }
 
@@ -77,6 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loadProducts();
         showToast(editId ? 'Product updated successfully!' : 'Product added successfully!', 'success');
     });
+
+    function getProductImage(name) {
+        const query = encodeURIComponent(name.trim() || 'inventory product');
+        return `https://source.unsplash.com/featured/520x320/?${query}`;
+    }
 
     // Load and display products
     function loadProducts() {
@@ -159,9 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tableBody.appendChild(tr);
             } else {
+                const imageUrl = product.image || getProductImage(product.name);
                 const card = document.createElement('div');
                 card.className = currentView === 'compact' ? 'product-card compact' : 'product-card';
                 card.innerHTML = `
+                    <div class="product-card-media">
+                        <img src="${imageUrl}" alt="${product.name}">
+                    </div>
                     <div class="product-card-header">
                         <div>
                             <h3 class="product-card-title">${product.name}</h3>

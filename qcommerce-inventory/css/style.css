@@ -1137,6 +1137,48 @@ textarea:focus {
     font-weight: 500;
 }
 
+.stock-preview {
+    margin: 12px 0;
+    padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    display: none;
+}
+
+.stock-preview.active {
+    display: block;
+}
+
+.stock-preview-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    color: var(--text);
+}
+
+.stock-preview-card strong {
+    font-weight: 700;
+}
+
+.auth-field-group {
+    position: relative;
+}
+
+.auth-field-group input {
+    padding-left: 44px;
+}
+
+.auth-field-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 1rem;
+}
+
 /* ========== AUTH PAGES ========== */
 body.auth-page {
     display: block;

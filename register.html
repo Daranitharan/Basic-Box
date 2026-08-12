@@ -31,24 +31,34 @@
                 <p class="auth-sub">Register to start using Basics Box</p>
 
                 <form id="registerForm" novalidate>
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" id="name" placeholder="Your full name" required>
+                    <div class="form-group auth-field-group">
+                        <label>Shop Name *</label>
+                        <i class="fas fa-store auth-field-icon"></i>
+                        <input type="text" id="name" placeholder="e.g. Fresh Mart" required>
                     </div>
 
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email" placeholder="you@example.com" required>
+                    <div class="form-group auth-field-group">
+                        <label>Phone Number *</label>
+                        <i class="fas fa-phone auth-field-icon"></i>
+                        <input type="tel" id="phone" placeholder="Enter phone number" required>
                     </div>
 
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="password" placeholder="Your password" required>
+                    <div class="form-group auth-field-group">
+                        <label>Shop Address</label>
+                        <i class="fas fa-map-marker-alt auth-field-icon"></i>
+                        <input type="text" id="address" placeholder="Enter shop address">
                     </div>
 
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                    <div class="form-group auth-field-group">
+                        <label>UPI ID (optional)</label>
+                        <i class="fas fa-credit-card auth-field-icon"></i>
+                        <input type="text" id="upi" placeholder="e.g. merchant@upi">
+                    </div>
+
+                    <div class="form-group auth-field-group">
+                        <label>GSTIN</label>
+                        <i class="fas fa-file-alt auth-field-icon"></i>
+                        <input type="text" id="gstin" placeholder="Enter GSTIN">
                     </div>
 
                     <button type="submit" class="btn btn-primary auth-submit">

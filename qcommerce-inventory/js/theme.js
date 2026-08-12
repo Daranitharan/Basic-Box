@@ -6,8 +6,7 @@ function initTheme() {
     let theme = saved;
 
     if (!theme) {
-        // Fall back to system preference
-        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        theme = 'light';
     }
 
     document.documentElement.setAttribute('data-theme', theme);

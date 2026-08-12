@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock | Basics Box</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div>
+                <h2>Basics Box</h2>
+                <p>Inventory System</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="../merchant.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="nav-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="stock.html" class="nav-item active">
+                <i class="fas fa-boxes"></i>
+                <span>Stock</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <header class="top-header">
+            <div class="page-heading">
+                <h1 class="page-title">Stock</h1>
+                <p class="page-subtitle">Manage purchases, sales, and current inventory</p>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid-2">
+            <section class="card">
+                <div class="card-header">
+                    <h3>Buy Stock</h3>
+                </div>
+                <div class="card-body">
+                    <form id="purchaseForm">
+                        <div class="form-group">
+                            <label>Select Product *</label>
+                            <select id="purchaseProductSelect" required>
+                                <option value="">-- Select Product --</option>
+                            </select>
+                        </div>
+                        <div class="stock-preview" id="purchasePreview"></div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" id="purchaseQuantity" min="1" required placeholder="Enter quantity">
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Price (per unit) *</label>
+                            <input type="number" id="purchasePrice" min="0" step="0.01" required placeholder="e.g. 24.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Cost</label>
+                            <input type="text" id="purchaseTotalCost" readonly placeholder="₹0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier (optional)</label>
+                            <input type="text" id="purchaseSupplier" placeholder="Supplier name">
+                        </div>
+                        <div class="form-group">
+                            <label>Notes (optional)</label>
+                            <textarea id="purchaseNotes" rows="2" placeholder="Any notes..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-plus"></i> Save Purchase
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3>Sell Stock</h3>
+                </div>
+                <div class="card-body">
+                    <form id="saleForm">
+                        <div class="form-group">
+                            <label>Select Product *</label>
+                            <select id="saleProductSelect" required>
+                                <option value="">-- Select Product --</option>
+                            </select>
+                            <p class="form-hint" id="stockHint"></p>
+                        </div>
+                        <div class="stock-preview" id="salePreview"></div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="number" id="saleQuantity" min="1" required placeholder="Enter quantity">
+                        </div>
+                        <div class="form-group">
+                            <label>Selling Price (per unit) *</label>
+                            <input type="number" id="salePrice" min="0" step="0.01" required placeholder="e.g. 30.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Amount</label>
+                            <input type="text" id="saleTotalAmount" readonly placeholder="₹0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Estimated Profit</label>
+                            <input type="text" id="saleEstimatedProfit" readonly placeholder="₹0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Customer (optional)</label>
+                            <input type="text" id="saleCustomer" placeholder="Customer name">
+                        </div>
+                        <div class="form-group">
+                            <label>Notes (optional)</label>
+                            <textarea id="saleNotes" rows="2" placeholder="Any notes..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-check"></i> Save Sale
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+        <div class="grid-2" style="margin-top: 22px;">
+            <section class="card">
+                <div class="card-header">
+                    <h3>Recent Purchases</h3>
+                </div>
+                <div class="card-body" id="recentPurchases">
+                    <p class="empty-text">No purchases recorded yet.</p>
+                </div>
+            </section>
+            <section class="card">
+                <div class="card-header">
+                    <h3>Recent Sales</h3>
+                </div>
+                <div class="card-body" id="recentSales">
+                    <p class="empty-text">No sales recorded yet.</p>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/stock.js"></script>
+</body>
+</html>
