@@ -74,12 +74,6 @@
                     </div>
 
                     <div class="form-group auth-field-group">
-                        <label>UPI ID (optional)</label>
-                        <i class="fas fa-credit-card auth-field-icon"></i>
-                        <input type="text" id="upi" placeholder="e.g. merchant@upi">
-                    </div>
-
-                    <div class="form-group auth-field-group">
                         <label>GSTIN</label>
                         <i class="fas fa-file-alt auth-field-icon"></i>
                         <input type="text" id="gstin" placeholder="Enter GSTIN">
@@ -116,7 +110,6 @@
                 const confirmPassword = document.getElementById('confirmPassword').value;
                 const phone = document.getElementById('phone').value.trim();
                 const address = document.getElementById('address').value.trim();
-                const upi = document.getElementById('upi').value.trim();
                 const gstin = document.getElementById('gstin').value.trim();
 
                 if (!name || !shopName || !email || !password || !confirmPassword) {
@@ -133,7 +126,6 @@
                     shopName,
                     phone,
                     address,
-                    upi,
                     gstin
                 };
 

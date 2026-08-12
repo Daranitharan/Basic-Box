@@ -907,7 +907,7 @@ body {
 .modal-content {
     background: var(--card-bg-solid);
     width: 100%;
-    max-width: 460px;
+    max-width: 640px;
     border: 1px solid var(--card-border);
     border-radius: 20px;
     overflow: hidden;
@@ -971,9 +971,10 @@ body {
     background: var(--input-bg);
     border: 1px solid var(--card-border);
     border-radius: 12px;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     font-family: 'Inter', sans-serif;
     color: var(--text);
+    min-height: 46px;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -987,6 +988,12 @@ option {
     background-color: var(--card-bg-solid);
     color: var(--text);
     padding: 8px;
+}
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .form-group input:focus,
@@ -1253,6 +1260,23 @@ textarea:focus {
 
 .auth-field-group input {
     padding-left: 44px;
+    padding-right: 14px;
+}
+
+.auth-field-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    color: var(--text);
+}
+
+.auth-field-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 1rem;
 }
 
 .auth-field-icon {

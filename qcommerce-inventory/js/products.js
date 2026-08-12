@@ -80,10 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 openingStock: Number(document.getElementById('openingStock').value) || 0,
                 currentStock: currentStockValue,
                 stock: currentStockValue,
-                expiryDate: document.getElementById('expiryDate').value || '',
-                mrp: Number(document.getElementById('mrp').value) || 0,
-                buyPrice: Number(document.getElementById('buyPrice').value) || 0,
-                sellPrice: Number(document.getElementById('sellPrice').value) || 0,
                 supplier: document.getElementById('supplier').value.trim(),
                 image: imageData || existingProduct?.image || getProductImage(productName),
                 barcode: barcodeValue
@@ -139,10 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('minStock').value = product.minStock || 0;
         document.getElementById('openingStock').value = product.openingStock || 0;
         document.getElementById('currentStock').value = product.currentStock ?? product.stock ?? 0;
-        document.getElementById('expiryDate').value = product.expiryDate || '';
-        document.getElementById('mrp').value = product.mrp || 0;
-        document.getElementById('buyPrice').value = product.buyPrice || 0;
-        document.getElementById('sellPrice').value = product.sellPrice || 0;
         document.getElementById('supplier').value = product.supplier || '';
         document.getElementById('barcode').value = product.barcode || '';
 
