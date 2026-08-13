@@ -158,6 +158,93 @@
         [data-theme="dark"] .category-picker-list-wrap::after {
             background: linear-gradient(transparent, #14141c);
         }
+
+        /* ===== Category Filter ===== */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .category-filter-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-filter-select {
+            padding: 8px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            min-width: 160px;
+        }
+
+        [data-theme="dark"] .category-filter-select {
+            color-scheme: dark;
+        }
+
+        .category-filter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        /* ===== Fix Product Card Layout ===== */
+        .product-card {
+            padding: 0 !important;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card-media {
+            width: 100%;
+            height: 170px;
+            overflow: hidden;
+            background: var(--card-bg);
+            flex-shrink: 0;
+        }
+
+        .product-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            transition: transform 0.35s ease;
+        }
+
+        .product-card:hover .product-card-media img {
+            transform: scale(1.04);
+        }
+
+        .product-card.compact .product-card-media {
+            height: 130px;
+        }
+
+        .product-card-header {
+            padding: 14px 16px 6px 16px !important;
+        }
+
+        .product-card-stock {
+            padding: 4px 16px 8px 16px !important;
+            flex: 1;
+        }
+
+        .product-card-actions {
+            padding: 12px 16px 16px 16px !important;
+            margin-top: 0 !important;
+            border-top: 1px solid var(--card-border);
+        }
     </style>
 </head>
 <body>
@@ -217,7 +304,26 @@
         <!-- Products Table -->
         <section class="card">
             <div class="card-header">
-                <h3>All Products</h3>
+                <h3 id="productsHeading">All Products</h3>
+                <div class="category-filter-wrap">
+                    <label for="categoryFilter" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter by Category:</label>
+                    <select id="categoryFilter" class="category-filter-select">
+                        <option value="">All Products</option>
+                        <option value="biscuit">Biscuit</option>
+                        <option value="juice">Juice</option>
+                        <option value="food">Food</option>
+                        <option value="cool drink">Cool Drink</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="medicines">Medicines</option>
+                        <option value="cleaning essential">Cleaning Essential</option>
+                        <option value="personal care">Personal Care</option>
+                        <option value="grocery items">Grocery Items</option>
+                        <option value="chips">Chips</option>
+                        <option value="chocolate">Chocolate</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive" id="tableView">
@@ -364,12 +470,12 @@
     <script>
         // ===== Custom Category Picker Logic =====
         (function() {
-            const trigger   = document.getElementById('categoryTrigger');
-            const dropdown  = document.getElementById('categoryDropdown');
-            const arrow     = document.getElementById('categoryArrow');
+            const trigger     = document.getElementById('categoryTrigger');
+            const dropdown    = document.getElementById('categoryDropdown');
+            const arrow       = document.getElementById('categoryArrow');
             const triggerText = document.getElementById('categoryTriggerText');
-            const hiddenSelect = document.getElementById('category');
-            const options   = document.querySelectorAll('.category-option');
+            const hiddenInput = document.getElementById('category');
+            const options     = document.querySelectorAll('.category-option');
 
             function openDropdown() {
                 dropdown.classList.add('open');
@@ -384,28 +490,31 @@
             }
 
             function setCategory(value, label) {
-                hiddenSelect.value = value;
-                triggerText.textContent = label || 'Select Category';
-                if (value) {
-                    triggerText.style.color = 'var(--text)';
-                    triggerText.style.fontStyle = 'normal';
-                } else {
-                    triggerText.style.color = 'var(--text-faint)';
-                    triggerText.style.fontStyle = 'italic';
-                }
+                // Write to hidden input two ways — belt and suspenders
+                hiddenInput.value = value || '';
+                hiddenInput.setAttribute('value', value || '');
+                trigger.dataset.selected = value || '';
+
+                triggerText.textContent = (value && label) ? label : 'Select Category';
+                triggerText.style.color = value ? 'var(--text)' : 'var(--text-faint)';
+                triggerText.style.fontStyle = value ? 'normal' : 'italic';
+
                 options.forEach(o => o.classList.toggle('selected', o.dataset.value === value));
             }
 
             trigger.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
             });
 
             options.forEach(opt => {
-                opt.addEventListener('click', () => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const val  = opt.dataset.value;
-                    const text = opt.textContent.trim();
-                    setCategory(val, val ? text : 'Select Category');
+                    // Get clean text (strip icon text)
+                    const text = opt.childNodes[opt.childNodes.length - 1].textContent.trim();
+                    setCategory(val, text);
                     closeDropdown();
                 });
             });
@@ -417,14 +526,16 @@
                 }
             });
 
-            // Expose setter so products.js can set category when editing
+            // Expose setter so products.js can call it
             window.setCategoryPicker = function(value) {
-                const opt = document.querySelector(`.category-option[data-value="${value}"]`);
-                const label = opt ? opt.textContent.trim() : 'Select Category';
-                setCategory(value, value ? label : 'Select Category');
+                const opt = document.querySelector(`.category-option[data-value="${CSS.escape(value)}"]`);
+                const text = opt
+                    ? opt.childNodes[opt.childNodes.length - 1].textContent.trim()
+                    : '';
+                setCategory(value || '', text);
             };
 
-            // Init placeholder style
+            // Init
             setCategory('', '');
         })();
     </script>

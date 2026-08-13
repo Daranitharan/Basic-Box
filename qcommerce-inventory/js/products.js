@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = Storage.get('products-view') || 'table';
     if (!allowedViews.includes(currentView)) currentView = 'table';
     let editId = null;
+    let currentCategoryFilter = ''; // Track active category filter
 
     // Initialize view switcher
     function initViewSwitcher() {
@@ -34,6 +35,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initViewSwitcher();
 
+    // Initialize category filter
+    const categoryFilter = document.getElementById('categoryFilter');
+    const productsHeading = document.getElementById('productsHeading');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', (e) => {
+            currentCategoryFilter = e.target.value;
+            loadProducts();
+            // Update heading
+            if (productsHeading) {
+                if (currentCategoryFilter) {
+                    const selectedOption = categoryFilter.options[categoryFilter.selectedIndex].text;
+                    productsHeading.textContent = selectedOption;
+                } else {
+                    productsHeading.textContent = 'All Products';
+                }
+            }
+        });
+    }
+
     // Load products when page opens
     loadProducts();
 
@@ -41,7 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
     addBtn.addEventListener('click', () => {
         editId = null;
         document.getElementById('modalTitle').textContent = 'Add New Product';
-        form.reset();
+
+        // Manually reset each field instead of form.reset()
+        // (form.reset() clears hidden inputs too, breaking the category picker)
+        document.getElementById('sku').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('unit').value = '';
+        document.getElementById('supplier').value = '';
+        document.getElementById('minStock').value = '0';
+        document.getElementById('barcode').value = '';
+
         if (window.setCategoryPicker) window.setCategoryPicker('');
         resetPreview();
         setFeedback('Scan or enter a barcode to lookup a product.');
@@ -56,10 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        // Manual category validation (hidden select can't use required)
-        const categoryValue = document.getElementById('category').value.trim();
+        // Read category from hidden input, with fallback to trigger's data attribute
+        const categoryInput = document.getElementById('category');
         const categoryTrigger = document.getElementById('categoryTrigger');
-        if (!categoryValue) {
+        const categoryValue = (categoryInput ? categoryInput.value : '') ||
+                              (categoryTrigger ? categoryTrigger.dataset.selected : '') || '';
+
+        if (!categoryValue.trim()) {
             if (categoryTrigger) {
                 categoryTrigger.style.borderColor = 'var(--danger)';
                 categoryTrigger.style.boxShadow = '0 0 0 3px var(--danger-soft)';
@@ -88,10 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const currentStockValue = Number(existingProduct?.currentStock ?? existingProduct?.stock ?? 0);
+            const catInput   = document.getElementById('category');
+            const catTrigger = document.getElementById('categoryTrigger');
+            const finalCategory = (catInput ? catInput.value : '') ||
+                                  (catTrigger ? catTrigger.dataset.selected : '') || '';
             const product = {
                 id: editId || Date.now().toString(),
                 sku: document.getElementById('sku').value.trim(),
-                category: document.getElementById('category').value.trim(),
+                category: finalCategory.trim(),
                 name: productName,
                 unit: document.getElementById('unit').value,
                 minStock: Number(document.getElementById('minStock').value) || 0,
@@ -99,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentStock: currentStockValue,
                 stock: currentStockValue,
                 supplier: document.getElementById('supplier').value.trim(),
-                image: imageData || existingProduct?.image || getProductImage(productName),
+                image: imageData || existingProduct?.image || null,
                 barcode: barcodeValue
             };
 
@@ -167,7 +203,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load and display products
     function loadProducts() {
-        const products = Storage.get('products') || [];
+        let products = Storage.get('products') || [];
+        
+        // Filter by category if a filter is active
+        if (currentCategoryFilter) {
+            products = products.filter(p => p.category === currentCategoryFilter);
+        }
+        
         tableBody.innerHTML = '';
         gridView.innerHTML = '';
 
@@ -175,6 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
             noProductsMsg.style.display = 'block';
             tableView.classList.add('hidden');
             gridView.classList.add('hidden');
+            noProductsMsg.textContent = currentCategoryFilter 
+                ? `No products found in this category.` 
+                : 'No products found. Click "Add Product" to create one.';
             return;
         }
 
@@ -247,13 +292,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tableBody.appendChild(tr);
             } else {
-                const imageUrl = product.image || getProductImage(product.name);
+                const imageUrl = product.image || null;
                 const card = document.createElement('div');
                 card.className = currentView === 'compact' ? 'product-card compact' : 'product-card';
+                
+                const imageHTML = imageUrl 
+                    ? `<div class="product-card-media"><img src="${imageUrl}" alt="${product.name}" onerror="this.parentElement.style.display='none'"></div>`
+                    : '';
+                
                 card.innerHTML = `
-                    <div class="product-card-media">
-                        <img src="${imageUrl}" alt="${product.name}">
-                    </div>
+                    ${imageHTML}
                     <div class="product-card-header">
                         <div>
                             <h3 class="product-card-title">${product.name}</h3>
@@ -279,6 +327,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
                     </div>
                 `;
+                
+                // If no image, add extra padding
+                if (!imageUrl) {
+                    card.style.padding = '16px';
+                }
+                
                 gridView.appendChild(card);
             }
         });
