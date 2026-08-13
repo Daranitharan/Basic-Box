@@ -159,43 +159,73 @@
             background: linear-gradient(transparent, #14141c);
         }
 
-        /* ===== Category Filter ===== */
-        .card-header {
+        /* ===== Category Filter Pills ===== */
+        .category-filters {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .category-filter-wrap {
-            display: flex;
-            align-items: center;
             gap: 8px;
+            overflow-x: auto;
+            padding: 12px 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--text-faint) transparent;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .category-filter-select {
-            padding: 8px 12px;
-            background: var(--input-bg);
+        .category-filters::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .category-filters::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .category-filters::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 4px;
+        }
+
+        .category-filters::-webkit-scrollbar-thumb:hover {
+            background: var(--text-faint);
+        }
+
+        .category-filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 10px;
+            border-radius: 999px;
             font-size: 0.85rem;
             font-weight: 500;
             font-family: 'Inter', sans-serif;
-            color: var(--text);
+            color: var(--text-muted);
             cursor: pointer;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-            min-width: 160px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        [data-theme="dark"] .category-filter-select {
-            color-scheme: dark;
+        .category-filter-pill:hover {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-color: var(--accent-ring);
+            transform: translateY(-1px);
         }
 
-        .category-filter-select:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-soft);
+        .category-filter-pill.active {
+            background: var(--accent-grad);
+            color: white;
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: 0 4px 12px -4px var(--accent-ring);
+        }
+
+        .category-filter-pill i {
+            font-size: 0.8rem;
+        }
+
+        .category-filter-pill.active i {
+            animation: pulseGlow 2s ease-in-out infinite;
         }
 
         /* ===== Fix Product Card Layout ===== */
@@ -301,28 +331,54 @@
             </div>
         </header>
 
-        <!-- Products Table -->
+        <!-- Products Section -->
         <section class="card">
-            <div class="card-header">
-                <h3 id="productsHeading">All Products</h3>
-                <div class="category-filter-wrap">
-                    <label for="categoryFilter" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter by Category:</label>
-                    <select id="categoryFilter" class="category-filter-select">
-                        <option value="">All Products</option>
-                        <option value="biscuit">Biscuit</option>
-                        <option value="juice">Juice</option>
-                        <option value="food">Food</option>
-                        <option value="cool drink">Cool Drink</option>
-                        <option value="vegetables">Vegetables</option>
-                        <option value="fruits">Fruits</option>
-                        <option value="medicines">Medicines</option>
-                        <option value="cleaning essential">Cleaning Essential</option>
-                        <option value="personal care">Personal Care</option>
-                        <option value="grocery items">Grocery Items</option>
-                        <option value="chips">Chips</option>
-                        <option value="chocolate">Chocolate</option>
-                        <option value="others">Others</option>
-                    </select>
+            <div class="card-header" style="display: block;">
+                <h3 id="productsHeading" style="margin-bottom: 12px;">All Products</h3>
+                <!-- Category Filter Pills -->
+                <div class="category-filters" id="categoryFilters">
+                    <button class="category-filter-pill active" data-category="">
+                        <i class="fas fa-th"></i> All Products
+                    </button>
+                    <button class="category-filter-pill" data-category="biscuit">
+                        <i class="fas fa-cookie-bite"></i> Biscuit
+                    </button>
+                    <button class="category-filter-pill" data-category="juice">
+                        <i class="fas fa-glass-whiskey"></i> Juice
+                    </button>
+                    <button class="category-filter-pill" data-category="food">
+                        <i class="fas fa-utensils"></i> Food
+                    </button>
+                    <button class="category-filter-pill" data-category="cool drink">
+                        <i class="fas fa-mug-hot"></i> Cool Drink
+                    </button>
+                    <button class="category-filter-pill" data-category="vegetables">
+                        <i class="fas fa-leaf"></i> Vegetables
+                    </button>
+                    <button class="category-filter-pill" data-category="fruits">
+                        <i class="fas fa-apple-alt"></i> Fruits
+                    </button>
+                    <button class="category-filter-pill" data-category="medicines">
+                        <i class="fas fa-pills"></i> Medicines
+                    </button>
+                    <button class="category-filter-pill" data-category="cleaning essential">
+                        <i class="fas fa-spray-can"></i> Cleaning Essential
+                    </button>
+                    <button class="category-filter-pill" data-category="personal care">
+                        <i class="fas fa-spa"></i> Personal Care
+                    </button>
+                    <button class="category-filter-pill" data-category="grocery items">
+                        <i class="fas fa-shopping-basket"></i> Grocery Items
+                    </button>
+                    <button class="category-filter-pill" data-category="chips">
+                        <i class="fas fa-fire"></i> Chips
+                    </button>
+                    <button class="category-filter-pill" data-category="chocolate">
+                        <i class="fas fa-candy-cane"></i> Chocolate
+                    </button>
+                    <button class="category-filter-pill" data-category="others">
+                        <i class="fas fa-box-open"></i> Others
+                    </button>
                 </div>
             </div>
             <div class="card-body">

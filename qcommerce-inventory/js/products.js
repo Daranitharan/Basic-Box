@@ -35,24 +35,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initViewSwitcher();
 
-    // Initialize category filter
-    const categoryFilter = document.getElementById('categoryFilter');
+    // Initialize category filter pills
+    const categoryPills = document.querySelectorAll('.category-filter-pill');
     const productsHeading = document.getElementById('productsHeading');
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', (e) => {
-            currentCategoryFilter = e.target.value;
+    
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            // Remove active from all pills
+            categoryPills.forEach(p => p.classList.remove('active'));
+            // Add active to clicked pill
+            pill.classList.add('active');
+            
+            // Update filter and reload
+            currentCategoryFilter = pill.dataset.category || '';
             loadProducts();
+            
             // Update heading
             if (productsHeading) {
-                if (currentCategoryFilter) {
-                    const selectedOption = categoryFilter.options[categoryFilter.selectedIndex].text;
-                    productsHeading.textContent = selectedOption;
-                } else {
-                    productsHeading.textContent = 'All Products';
-                }
+                const pillText = pill.textContent.trim();
+                productsHeading.textContent = pillText;
             }
         });
-    }
+    });
 
     // Load products when page opens
     loadProducts();
