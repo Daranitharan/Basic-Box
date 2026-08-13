@@ -1546,6 +1546,70 @@ body.auth-page {
     width: 100%;
 }
 
+/* ========== DASHBOARD SEARCH & SCROLL ========== */
+.dashboard-search-container {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.dashboard-search-container i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.dashboard-search-input {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.dashboard-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+}
+
+.dashboard-search-input::placeholder {
+    color: var(--text-faint);
+}
+
+.dashboard-scroll-container {
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-soft) transparent;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--primary-soft);
+    border-radius: 10px;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
 /* ========== DASHBOARD COLLECTION LAYOUT ========== */
 .dash-grid {
     display: grid;

@@ -7,55 +7,158 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Category Pills */
-        .category-filters {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 12px 0;
-            scrollbar-width: thin;
-            -webkit-overflow-scrolling: touch;
+        /* Category Dropdown */
+        .custom-category-filter {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
         }
 
-        .category-filters::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .category-filters::-webkit-scrollbar-thumb {
-            background: var(--card-border);
-            border-radius: 4px;
-        }
-
-        .category-filter-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
+        .category-filter-trigger {
+            width: 100%;
+            padding: 10px 14px;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             transition: all 0.2s ease;
-            white-space: nowrap;
+            text-align: left;
+        }
+
+        .category-filter-trigger:hover {
+            background: var(--input-bg);
+            border-color: var(--accent-ring);
+        }
+
+        .category-filter-trigger.open {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .selected-category-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .selected-category-display i {
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .category-filter-arrow {
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            transition: transform 0.25s ease;
             flex-shrink: 0;
         }
 
-        .category-filter-pill:hover {
-            background: var(--accent-soft);
-            color: var(--accent-strong);
-            border-color: var(--accent-ring);
-            transform: translateY(-1px);
+        .category-filter-arrow.rotated {
+            transform: rotate(180deg);
         }
 
-        .category-filter-pill.active {
+        .category-filter-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px -12px rgba(10, 10, 16, 0.25);
+            z-index: 500;
+            overflow: hidden;
+            display: none;
+            animation: dropdownFade 0.18s ease both;
+        }
+
+        [data-theme="dark"] .category-filter-dropdown {
+            background: #14141c;
+            box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .category-filter-dropdown.open {
+            display: block;
+        }
+
+        @keyframes dropdownFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        .category-filter-list {
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .category-filter-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .category-filter-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .category-filter-list::-webkit-scrollbar-thumb {
+            background: var(--accent-soft);
+            border-radius: 10px;
+        }
+
+        .category-filter-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .category-option-filter {
+            padding: 11px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-option-filter:last-child {
+            margin-bottom: 0;
+        }
+
+        .category-option-filter:hover {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+
+        .category-option-filter.active {
             background: var(--accent-grad);
             color: white;
-            border-color: transparent;
             font-weight: 600;
             box-shadow: 0 4px 12px -4px var(--accent-ring);
+        }
+
+        .category-option-filter i {
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .category-option-filter.active i {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         /* Product Grid */
@@ -241,50 +344,60 @@
         <section class="card product-selection-view" id="productSelectionView">
             <div class="card-header" style="display: block;">
                 <h3 id="categoryHeading" style="margin-bottom: 12px;">All Products</h3>
-                <!-- Category Filter Pills -->
-                <div class="category-filters" id="categoryFilters">
-                    <button class="category-filter-pill active" data-category="">
-                        <i class="fas fa-th"></i> All Products
+                <!-- Category Filter Dropdown -->
+                <div class="custom-category-filter">
+                    <button class="category-filter-trigger" id="categoryFilterTrigger">
+                        <span class="selected-category-display">
+                            <i class="fas fa-th"></i> All Products
+                        </span>
+                        <i class="fas fa-chevron-down category-filter-arrow"></i>
                     </button>
-                    <button class="category-filter-pill" data-category="biscuit">
-                        <i class="fas fa-cookie-bite"></i> Biscuit
-                    </button>
-                    <button class="category-filter-pill" data-category="juice">
-                        <i class="fas fa-glass-whiskey"></i> Juice
-                    </button>
-                    <button class="category-filter-pill" data-category="food">
-                        <i class="fas fa-utensils"></i> Food
-                    </button>
-                    <button class="category-filter-pill" data-category="cool drink">
-                        <i class="fas fa-mug-hot"></i> Cool Drink
-                    </button>
-                    <button class="category-filter-pill" data-category="vegetables">
-                        <i class="fas fa-leaf"></i> Vegetables
-                    </button>
-                    <button class="category-filter-pill" data-category="fruits">
-                        <i class="fas fa-apple-alt"></i> Fruits
-                    </button>
-                    <button class="category-filter-pill" data-category="medicines">
-                        <i class="fas fa-pills"></i> Medicines
-                    </button>
-                    <button class="category-filter-pill" data-category="cleaning essential">
-                        <i class="fas fa-spray-can"></i> Cleaning Essential
-                    </button>
-                    <button class="category-filter-pill" data-category="personal care">
-                        <i class="fas fa-spa"></i> Personal Care
-                    </button>
-                    <button class="category-filter-pill" data-category="grocery items">
-                        <i class="fas fa-shopping-basket"></i> Grocery Items
-                    </button>
-                    <button class="category-filter-pill" data-category="chips">
-                        <i class="fas fa-fire"></i> Chips
-                    </button>
-                    <button class="category-filter-pill" data-category="chocolate">
-                        <i class="fas fa-candy-cane"></i> Chocolate
-                    </button>
-                    <button class="category-filter-pill" data-category="others">
-                        <i class="fas fa-box-open"></i> Others
-                    </button>
+                    <div class="category-filter-dropdown" id="categoryFilterDropdown">
+                        <div class="category-filter-list">
+                            <div class="category-option-filter active" data-category="">
+                                <i class="fas fa-th"></i> All Products
+                            </div>
+                            <div class="category-option-filter" data-category="biscuit">
+                                <i class="fas fa-cookie-bite"></i> Biscuit
+                            </div>
+                            <div class="category-option-filter" data-category="juice">
+                                <i class="fas fa-glass-whiskey"></i> Juice
+                            </div>
+                            <div class="category-option-filter" data-category="food">
+                                <i class="fas fa-utensils"></i> Food
+                            </div>
+                            <div class="category-option-filter" data-category="cool drink">
+                                <i class="fas fa-mug-hot"></i> Cool Drink
+                            </div>
+                            <div class="category-option-filter" data-category="vegetables">
+                                <i class="fas fa-leaf"></i> Vegetables
+                            </div>
+                            <div class="category-option-filter" data-category="fruits">
+                                <i class="fas fa-apple-alt"></i> Fruits
+                            </div>
+                            <div class="category-option-filter" data-category="medicines">
+                                <i class="fas fa-pills"></i> Medicines
+                            </div>
+                            <div class="category-option-filter" data-category="cleaning essential">
+                                <i class="fas fa-spray-can"></i> Cleaning Essential
+                            </div>
+                            <div class="category-option-filter" data-category="personal care">
+                                <i class="fas fa-spa"></i> Personal Care
+                            </div>
+                            <div class="category-option-filter" data-category="grocery items">
+                                <i class="fas fa-shopping-basket"></i> Grocery Items
+                            </div>
+                            <div class="category-option-filter" data-category="chips">
+                                <i class="fas fa-fire"></i> Chips
+                            </div>
+                            <div class="category-option-filter" data-category="chocolate">
+                                <i class="fas fa-candy-cane"></i> Chocolate
+                            </div>
+                            <div class="category-option-filter" data-category="others">
+                                <i class="fas fa-box-open"></i> Others
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-body">

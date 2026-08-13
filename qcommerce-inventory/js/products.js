@@ -35,26 +35,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initViewSwitcher();
 
-    // Initialize category filter pills
-    const categoryPills = document.querySelectorAll('.category-filter-pill');
+    // Initialize category filter dropdown
+    const categoryFilterTrigger = document.getElementById('categoryFilterTrigger');
+    const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
+    const categoryOptions = document.querySelectorAll('.category-option-filter');
+    const categoryArrow = document.querySelector('.category-filter-arrow');
     const productsHeading = document.getElementById('productsHeading');
     
-    categoryPills.forEach(pill => {
-        pill.addEventListener('click', () => {
-            // Remove active from all pills
-            categoryPills.forEach(p => p.classList.remove('active'));
-            // Add active to clicked pill
-            pill.classList.add('active');
+    // Toggle dropdown
+    if (categoryFilterTrigger) {
+        categoryFilterTrigger.addEventListener('click', () => {
+            const isOpen = categoryFilterDropdown.classList.contains('open');
+            if (isOpen) {
+                categoryFilterDropdown.classList.remove('open');
+                categoryFilterTrigger.classList.remove('open');
+                if (categoryArrow) categoryArrow.classList.remove('rotated');
+            } else {
+                categoryFilterDropdown.classList.add('open');
+                categoryFilterTrigger.classList.add('open');
+                if (categoryArrow) categoryArrow.classList.add('rotated');
+            }
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (categoryFilterTrigger && categoryFilterDropdown) {
+            if (!categoryFilterTrigger.contains(e.target) && !categoryFilterDropdown.contains(e.target)) {
+                categoryFilterDropdown.classList.remove('open');
+                categoryFilterTrigger.classList.remove('open');
+                if (categoryArrow) categoryArrow.classList.remove('rotated');
+            }
+        }
+    });
+    
+    // Handle category selection
+    categoryOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove active from all options
+            categoryOptions.forEach(o => o.classList.remove('active'));
+            // Add active to clicked option
+            option.classList.add('active');
             
             // Update filter and reload
-            currentCategoryFilter = pill.dataset.category || '';
+            currentCategoryFilter = option.dataset.category || '';
             loadProducts();
+            
+            // Update trigger text
+            if (categoryFilterTrigger) {
+                const selectedDisplay = categoryFilterTrigger.querySelector('.selected-category-display');
+                if (selectedDisplay) {
+                    selectedDisplay.innerHTML = option.innerHTML;
+                }
+            }
             
             // Update heading
             if (productsHeading) {
-                const pillText = pill.textContent.trim();
-                productsHeading.textContent = pillText;
+                const optionText = option.textContent.trim();
+                productsHeading.textContent = optionText;
             }
+            
+            // Close dropdown
+            categoryFilterDropdown.classList.remove('open');
+            categoryFilterTrigger.classList.remove('open');
+            if (categoryArrow) categoryArrow.classList.remove('rotated');
         });
     });
 

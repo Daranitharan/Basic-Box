@@ -133,9 +133,19 @@
                     <span class="badge badge-purchase" id="lowStockCount">0</span>
                 </div>
                 <div class="card-body">
-                    <div id="lowStockList">
+                    <!-- Search Bar -->
+                    <div class="dashboard-search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" 
+                               id="lowStockSearch" 
+                               class="dashboard-search-input" 
+                               placeholder="Search low stock products...">
+                    </div>
+                    
+                    <!-- Scrollable List Container -->
+                    <div class="dashboard-scroll-container" id="lowStockList">
                         <p class="empty-text">All products are sufficiently stocked.</p>
-                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -144,8 +154,20 @@
                 <div class="card-header">
                     <h3>Recent Transactions</h3>
                 </div>
-                <div class="card-body" id="recent-transactions">
-                    <p class="empty-text">No transactions yet. Start by adding products and recording buys/sells.</p>
+                <div class="card-body">
+                    <!-- Search Bar -->
+                    <div class="dashboard-search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" 
+                               id="transactionsSearch" 
+                               class="dashboard-search-input" 
+                               placeholder="Search transactions...">
+                    </div>
+                    
+                    <!-- Scrollable List Container -->
+                    <div class="dashboard-scroll-container" id="recent-transactions">
+                        <p class="empty-text">No transactions yet. Start by adding products and recording buys/sells.</p>
+                    </div>
                 </div>
             </section>
         </div>

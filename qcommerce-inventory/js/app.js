@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateDashboard();
+    
+    // Setup search functionality
+    setupDashboardSearch();
 });
 
 // Animate a number from 0 to target value
@@ -205,5 +208,48 @@ function updateGreeting() {
     if (user && user.name) {
         const firstName = user.name.split(' ')[0];
         greetingEl.textContent = 'Welcome back, ' + firstName + '!';
+    }
+}
+
+// Setup search functionality for dashboard sections
+function setupDashboardSearch() {
+    // Low Stock Search
+    const lowStockSearch = document.getElementById('lowStockSearch');
+    if (lowStockSearch) {
+        lowStockSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const listItems = document.querySelectorAll('#lowStockList .low-stock-list li');
+            
+            listItems.forEach(item => {
+                const productName = item.querySelector('.item-name')?.textContent.toLowerCase() || '';
+                const productSku = item.querySelector('.item-sku')?.textContent.toLowerCase() || '';
+                
+                if (productName.includes(searchTerm) || productSku.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Transactions Search
+    const transactionsSearch = document.getElementById('transactionsSearch');
+    if (transactionsSearch) {
+        transactionsSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const transactionItems = document.querySelectorAll('#recent-transactions .purchase-item');
+            
+            transactionItems.forEach(item => {
+                const title = item.querySelector('.title')?.textContent.toLowerCase() || '';
+                const meta = item.querySelector('.meta')?.textContent.toLowerCase() || '';
+                
+                if (title.includes(searchTerm) || meta.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
     }
 }

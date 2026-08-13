@@ -22,14 +22,60 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCategoryFilter = '';
     let selectedProduct = null;
     
-    // Category filter pills
-    const categoryPills = document.querySelectorAll('.category-filter-pill');
-    categoryPills.forEach(pill => {
-        pill.addEventListener('click', () => {
-            categoryPills.forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-            currentCategoryFilter = pill.dataset.category || '';
-            categoryHeading.textContent = pill.textContent.trim();
+    // Category filter dropdown
+    const categoryFilterTrigger = document.getElementById('categoryFilterTrigger');
+    const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
+    const categoryOptions = document.querySelectorAll('.category-option-filter');
+    const categoryArrow = document.querySelector('.category-filter-arrow');
+    
+    // Toggle dropdown
+    if (categoryFilterTrigger) {
+        categoryFilterTrigger.addEventListener('click', () => {
+            const isOpen = categoryFilterDropdown.classList.contains('open');
+            if (isOpen) {
+                categoryFilterDropdown.classList.remove('open');
+                categoryFilterTrigger.classList.remove('open');
+                if (categoryArrow) categoryArrow.classList.remove('rotated');
+            } else {
+                categoryFilterDropdown.classList.add('open');
+                categoryFilterTrigger.classList.add('open');
+                if (categoryArrow) categoryArrow.classList.add('rotated');
+            }
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (categoryFilterTrigger && categoryFilterDropdown) {
+            if (!categoryFilterTrigger.contains(e.target) && !categoryFilterDropdown.contains(e.target)) {
+                categoryFilterDropdown.classList.remove('open');
+                categoryFilterTrigger.classList.remove('open');
+                if (categoryArrow) categoryArrow.classList.remove('rotated');
+            }
+        }
+    });
+    
+    // Handle category selection
+    categoryOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            categoryOptions.forEach(o => o.classList.remove('active'));
+            option.classList.add('active');
+            currentCategoryFilter = option.dataset.category || '';
+            categoryHeading.textContent = option.textContent.trim();
+            
+            // Update trigger text
+            if (categoryFilterTrigger) {
+                const selectedDisplay = categoryFilterTrigger.querySelector('.selected-category-display');
+                if (selectedDisplay) {
+                    selectedDisplay.innerHTML = option.innerHTML;
+                }
+            }
+            
+            // Close dropdown
+            categoryFilterDropdown.classList.remove('open');
+            categoryFilterTrigger.classList.remove('open');
+            if (categoryArrow) categoryArrow.classList.remove('rotated');
+            
             loadProductsGrid();
         });
     });
