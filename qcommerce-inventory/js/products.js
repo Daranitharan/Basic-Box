@@ -55,6 +55,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save product
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+
+        // Manual category validation (hidden select can't use required)
+        const categoryValue = document.getElementById('category').value.trim();
+        const categoryTrigger = document.getElementById('categoryTrigger');
+        if (!categoryValue) {
+            if (categoryTrigger) {
+                categoryTrigger.style.borderColor = 'var(--danger)';
+                categoryTrigger.style.boxShadow = '0 0 0 3px var(--danger-soft)';
+                setTimeout(() => {
+                    categoryTrigger.style.borderColor = '';
+                    categoryTrigger.style.boxShadow = '';
+                }, 2500);
+            }
+            showToast('Please select a category.', 'error');
+            return;
+        }
+
         const productName = document.getElementById('name').value.trim();
         const existingProducts = Storage.get('products') || [];
         const existingProduct = editId ? existingProducts.find(p => p.id === editId) : null;
