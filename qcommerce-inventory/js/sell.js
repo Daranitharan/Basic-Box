@@ -126,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Load products into grid
-    function loadProductsGrid() {
-        let products = Storage.get('products') || [];
+    async function loadProductsGrid() {
+        let products = await DB.getProducts();
         
         // Filter by category
         if (currentCategoryFilter) {
@@ -213,35 +213,25 @@ document.addEventListener('DOMContentLoaded', () => {
     priceInput.addEventListener('input', calculateTotals);
     
     // Get latest purchase price
-    function getLatestPurchasePrice(productId) {
-        const purchases = Storage.get('purchases') || [];
+    async function getLatestPurchasePrice(productId) {
+        const purchases = await DB.getPurchases();
         const productPurchases = purchases.filter(p => p.productId === productId);
         return productPurchases.length > 0 ? productPurchases[0].purchasePrice : 0;
     }
     
     // Handle form submit
-    sellForm.addEventListener('submit', (e) => {
+    sellForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!selectedProduct) {
-            showToast('No product selected', 'error');
-            return;
-        }
+        if (!selectedProduct) { showToast('No product selected', 'error'); return; }
         
         const quantity = Number(quantityInput.value);
         const sellingPrice = Number(priceInput.value);
         const customer = document.getElementById('customer').value.trim();
         const notes = document.getElementById('notes').value.trim();
         
-        if (!quantity || quantity <= 0) {
-            showToast('Please enter a valid quantity', 'error');
-            return;
-        }
-        
-        if (!sellingPrice || sellingPrice < 0) {
-            showToast('Please enter a valid selling price', 'error');
-            return;
-        }
+        if (!quantity || quantity <= 0) { showToast('Please enter a valid quantity', 'error'); return; }
+        if (!sellingPrice || sellingPrice < 0) { showToast('Please enter a valid selling price', 'error'); return; }
         
         const availableStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
         if (quantity > availableStock) {
@@ -249,52 +239,43 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        const costPrice = getLatestPurchasePrice(selectedProduct.id);
+        const costPrice = await getLatestPurchasePrice(selectedProduct.id);
         const totalAmount = quantity * sellingPrice;
         const profit = (sellingPrice - costPrice) * quantity;
         
-        // Update stock
-        let products = Storage.get('products') || [];
-        const productIndex = products.findIndex(p => p.id === selectedProduct.id);
-        if (productIndex !== -1) {
-            const newStock = availableStock - quantity;
-            products[productIndex].currentStock = newStock;
-            products[productIndex].stock = newStock;
-            Storage.set('products', products);
-        }
+        // Update stock in DB
+        const newStock = availableStock - quantity;
+        await DB.updateProductStock(selectedProduct.id, newStock);
         
-        // Save sale
+        // Save sale to DB
         const sale = {
             id: Date.now().toString(),
             productId: selectedProduct.id,
             productName: selectedProduct.name,
             sku: selectedProduct.sku,
-            quantity: quantity,
-            sellingPrice: sellingPrice,
-            totalAmount: totalAmount,
-            costPrice: costPrice,
-            profit: profit,
-            customer: customer,
-            notes: notes,
+            quantity,
+            sellingPrice,
+            totalAmount,
+            costPrice,
+            profit,
+            customer,
+            notes,
             date: new Date().toISOString()
         };
         
-        let sales = Storage.get('sales') || [];
-        sales.unshift(sale);
-        Storage.set('sales', sales);
+        const result = await DB.saveSale(sale);
+        if (!result.ok) { showToast('Error saving sale.', 'error'); return; }
         
-        const profitText = profit >= 0 
-            ? `Profit: ₹${profit.toFixed(2)}` 
-            : `Loss: ₹${Math.abs(profit).toFixed(2)}`;
+        const profitText = profit >= 0 ? `Profit: ₹${profit.toFixed(2)}` : `Loss: ₹${Math.abs(profit).toFixed(2)}`;
         showToast(`Sale completed! ${profitText}`, 'success');
         
-        loadRecentSales();
+        await loadRecentSales();
         showProductSelection();
     });
     
     // Load recent sales
-    function loadRecentSales() {
-        const sales = Storage.get('sales') || [];
+    async function loadRecentSales() {
+        const sales = await DB.getSales();
         
         if (sales.length === 0) {
             recentSalesDiv.innerHTML = '<p class="empty-text">No sales recorded yet.</p>';

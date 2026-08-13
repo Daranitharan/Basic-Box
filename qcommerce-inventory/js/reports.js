@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     periodSelect.addEventListener('change', loadReports);
 
-    function loadReports() {
+    async function loadReports() {
         const period = periodSelect.value;
-        const purchases = Storage.get('purchases') || [];
-        const sales = Storage.get('sales') || [];
+        const purchases = await DB.getPurchases();
+        const sales     = await DB.getSales();
 
         // Filter by selected period
         const filteredPurchases = purchases.filter(p => inPeriod(p.date, period));

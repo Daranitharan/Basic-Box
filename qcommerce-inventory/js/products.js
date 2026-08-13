@@ -153,13 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const productName = document.getElementById('name').value.trim();
-        const existingProducts = Storage.get('products') || [];
+        const existingProducts = Storage.get('products') || []; // local cache read
         const existingProduct = editId ? existingProducts.find(p => p.id === editId) : null;
 
         const imageInput = document.getElementById('productImageInput');
         let imageData = existingProduct?.image || null;
 
-        function persistProduct() {
+        async function persistProduct() {
             const barcodeValue = document.getElementById('barcode')?.value?.trim() || existingProduct?.barcode || '';
             const existingBarcodeMatch = existingProducts.find(p => p.barcode === barcodeValue && p.id !== (existingProduct?.id || ''));
             if (barcodeValue && existingBarcodeMatch) {
@@ -187,14 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 barcode: barcodeValue
             };
 
-            let products = existingProducts;
-            if (editId) {
-                products = products.map(p => p.id === editId ? { ...p, ...product } : p);
-            } else {
-                products.push(product);
+            const result = await DB.saveProduct(product);
+            if (!result.ok) {
+                showToast('Error saving product. Please try again.', 'error');
+                return;
             }
-
-            Storage.set('products', products);
             modal.classList.remove('active');
             loadProducts();
             showToast(editId ? 'Product updated successfully!' : 'Product added successfully!', 'success');
@@ -250,8 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Load and display products
-    function loadProducts() {
-        let products = Storage.get('products') || [];
+    async function loadProducts() {
+        let products = await DB.getProducts();
         
         // Filter by category if a filter is active
         if (currentCategoryFilter) {
@@ -386,20 +383,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Make functions global so buttons can call them
-    window.editProduct = function(id) {
-        const products = Storage.get('products') || [];
+    window.editProduct = async function(id) {
+        const products = await DB.getProducts();
         const product = products.find(p => p.id === id);
         if (!product) return;
         populateProductFields(product);
     };
 
-    window.deleteProduct = function(id) {
+    window.deleteProduct = async function(id) {
         if (!confirm('Are you sure you want to delete this product?')) return;
-
-        let products = Storage.get('products') || [];
-        products = products.filter(p => p.id !== id);
-        Storage.set('products', products);
+        const result = await DB.deleteProduct(id);
+        if (!result.ok) { showToast('Error deleting product.', 'error'); return; }
         loadProducts();
         showToast('Product deleted', 'info');
     };

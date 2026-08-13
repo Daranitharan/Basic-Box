@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Load products into grid
-    function loadProductsGrid() {
-        let products = Storage.get('products') || [];
+    async function loadProductsGrid() {
+        let products = await DB.getProducts();
         
         // Filter by category
         if (currentCategoryFilter) {
@@ -186,68 +186,50 @@ document.addEventListener('DOMContentLoaded', () => {
     priceInput.addEventListener('input', calculateTotal);
     
     // Handle form submit
-    buyForm.addEventListener('submit', (e) => {
+    buyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!selectedProduct) {
-            showToast('No product selected', 'error');
-            return;
-        }
+        if (!selectedProduct) { showToast('No product selected', 'error'); return; }
         
         const quantity = Number(quantityInput.value);
         const purchasePrice = Number(priceInput.value);
         const supplier = document.getElementById('supplier').value.trim();
         const notes = document.getElementById('notes').value.trim();
         
-        if (!quantity || quantity <= 0) {
-            showToast('Please enter a valid quantity', 'error');
-            return;
-        }
-        
-        if (purchasePrice < 0) {
-            showToast('Please enter a valid purchase price', 'error');
-            return;
-        }
+        if (!quantity || quantity <= 0) { showToast('Please enter a valid quantity', 'error'); return; }
+        if (purchasePrice < 0) { showToast('Please enter a valid purchase price', 'error'); return; }
         
         const currentStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
         const newStock = currentStock + quantity;
         
-        // Update stock
-        let products = Storage.get('products') || [];
-        const productIndex = products.findIndex(p => p.id === selectedProduct.id);
-        if (productIndex !== -1) {
-            products[productIndex].currentStock = newStock;
-            products[productIndex].stock = newStock;
-            Storage.set('products', products);
-        }
+        // Update stock in DB
+        await DB.updateProductStock(selectedProduct.id, newStock);
         
-        // Save purchase
+        // Save purchase to DB
         const purchase = {
             id: Date.now().toString(),
             productId: selectedProduct.id,
             productName: selectedProduct.name,
             sku: selectedProduct.sku,
-            quantity: quantity,
-            purchasePrice: purchasePrice,
+            quantity,
+            purchasePrice,
             totalCost: quantity * purchasePrice,
-            supplier: supplier,
-            notes: notes,
+            supplier,
+            notes,
             date: new Date().toISOString()
         };
         
-        let purchases = Storage.get('purchases') || [];
-        purchases.unshift(purchase);
-        Storage.set('purchases', purchases);
+        const result = await DB.savePurchase(purchase);
+        if (!result.ok) { showToast('Error saving purchase.', 'error'); return; }
         
         showToast(`Purchase completed! Stock updated to ${newStock} ${selectedProduct.unit}`, 'success');
-        
-        loadRecentPurchases();
+        await loadRecentPurchases();
         showProductSelection();
     });
     
     // Load recent purchases
-    function loadRecentPurchases() {
-        const purchases = Storage.get('purchases') || [];
+    async function loadRecentPurchases() {
+        const purchases = await DB.getPurchases();
         
         if (purchases.length === 0) {
             recentPurchasesDiv.innerHTML = '<p class="empty-text">No purchases recorded yet.</p>';
