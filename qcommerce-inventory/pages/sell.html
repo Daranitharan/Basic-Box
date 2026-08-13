@@ -6,6 +6,190 @@
     <title>Sell Stock | Basics Box</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Category Pills */
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px 0;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-filters::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .category-filters::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 4px;
+        }
+
+        .category-filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .category-filter-pill:hover {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-color: var(--accent-ring);
+            transform: translateY(-1px);
+        }
+
+        .category-filter-pill.active {
+            background: var(--accent-grad);
+            color: white;
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: 0 4px 12px -4px var(--accent-ring);
+        }
+
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+        }
+
+        .product-card {
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-ring);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .product-card-media {
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+
+        .product-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.35s ease;
+        }
+
+        .product-card:hover .product-card-media img {
+            transform: scale(1.05);
+        }
+
+        .product-card-body {
+            padding: 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .product-card-sku {
+            font-size: 0.75rem;
+            color: var(--text-faint);
+            margin-bottom: 8px;
+        }
+
+        .product-card-stock {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .stock-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stock-qty {
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .stock-qty.low {
+            color: var(--warning);
+        }
+
+        .stock-qty.out {
+            color: var(--danger);
+        }
+
+        /* Transaction Form (Step 2) */
+        .transaction-view {
+            display: none;
+        }
+
+        .transaction-view.active {
+            display: block;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+
+        .selected-product-preview {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+        }
+
+        .selected-product-preview h4 {
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .selected-product-preview .meta {
+            font-size: 0.85rem;
+            color: var(--text-faint);
+        }
+    </style>
 </head>
 <body>
 
@@ -27,13 +211,9 @@
                 <i class="fas fa-box"></i>
                 <span>Products</span>
             </a>
-            <a href="buy.html" class="nav-item">
-                <i class="fas fa-cart-plus"></i>
-                <span>Buy Stock</span>
-            </a>
-            <a href="sell.html" class="nav-item active">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Sell Stock</span>
+            <a href="stock.html" class="nav-item">
+                <i class="fas fa-boxes"></i>
+                <span>Stock</span>
             </a>
             <a href="reports.html" class="nav-item">
                 <i class="fas fa-file-invoice-dollar"></i>
@@ -48,7 +228,7 @@
         <header class="top-header">
             <div class="page-heading">
                 <h1 class="page-title">Sell Stock</h1>
-                <p class="page-subtitle">Record sales and track profit</p>
+                <p class="page-subtitle">Select a product to sell</p>
             </div>
             <div class="header-right">
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -57,70 +237,131 @@
             </div>
         </header>
 
-        <div class="grid-2">
-            <!-- Sell Form -->
-            <section class="card">
-                <div class="card-header">
-                    <h3>Record Sale</h3>
+        <!-- STEP 1: Product Selection Grid -->
+        <section class="card product-selection-view" id="productSelectionView">
+            <div class="card-header" style="display: block;">
+                <h3 id="categoryHeading" style="margin-bottom: 12px;">All Products</h3>
+                <!-- Category Filter Pills -->
+                <div class="category-filters" id="categoryFilters">
+                    <button class="category-filter-pill active" data-category="">
+                        <i class="fas fa-th"></i> All Products
+                    </button>
+                    <button class="category-filter-pill" data-category="biscuit">
+                        <i class="fas fa-cookie-bite"></i> Biscuit
+                    </button>
+                    <button class="category-filter-pill" data-category="juice">
+                        <i class="fas fa-glass-whiskey"></i> Juice
+                    </button>
+                    <button class="category-filter-pill" data-category="food">
+                        <i class="fas fa-utensils"></i> Food
+                    </button>
+                    <button class="category-filter-pill" data-category="cool drink">
+                        <i class="fas fa-mug-hot"></i> Cool Drink
+                    </button>
+                    <button class="category-filter-pill" data-category="vegetables">
+                        <i class="fas fa-leaf"></i> Vegetables
+                    </button>
+                    <button class="category-filter-pill" data-category="fruits">
+                        <i class="fas fa-apple-alt"></i> Fruits
+                    </button>
+                    <button class="category-filter-pill" data-category="medicines">
+                        <i class="fas fa-pills"></i> Medicines
+                    </button>
+                    <button class="category-filter-pill" data-category="cleaning essential">
+                        <i class="fas fa-spray-can"></i> Cleaning Essential
+                    </button>
+                    <button class="category-filter-pill" data-category="personal care">
+                        <i class="fas fa-spa"></i> Personal Care
+                    </button>
+                    <button class="category-filter-pill" data-category="grocery items">
+                        <i class="fas fa-shopping-basket"></i> Grocery Items
+                    </button>
+                    <button class="category-filter-pill" data-category="chips">
+                        <i class="fas fa-fire"></i> Chips
+                    </button>
+                    <button class="category-filter-pill" data-category="chocolate">
+                        <i class="fas fa-candy-cane"></i> Chocolate
+                    </button>
+                    <button class="category-filter-pill" data-category="others">
+                        <i class="fas fa-box-open"></i> Others
+                    </button>
                 </div>
-                <div class="card-body">
-                    <form id="sellForm">
-                        <div class="form-group">
-                            <label>Select Product *</label>
-                            <select id="productSelect" required>
-                                <option value="">-- Select Product --</option>
-                            </select>
-                            <p class="form-hint" id="stockHint"></p>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Quantity *</label>
-                            <input type="number" id="quantity" min="1" required placeholder="Enter quantity">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Selling Price (per unit) *</label>
-                            <input type="number" id="sellingPrice" min="0" step="0.01" required placeholder="e.g. 30.00">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Total Amount</label>
-                            <input type="text" id="totalAmount" readonly placeholder="₹0.00">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Estimated Profit</label>
-                            <input type="text" id="estimatedProfit" readonly placeholder="₹0.00">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Customer (optional)</label>
-                            <input type="text" id="customer" placeholder="Customer name">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Notes (optional)</label>
-                            <textarea id="notes" rows="2" placeholder="Any notes..."></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
-                            <i class="fas fa-check"></i> Save Sale
-                        </button>
-                    </form>
+            </div>
+            <div class="card-body">
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here -->
                 </div>
-            </section>
+                <p class="empty-text hidden" id="noProductsMsg">No products available.</p>
+            </div>
+        </section>
 
-            <!-- Recent Sales -->
-            <section class="card">
-                <div class="card-header">
-                    <h3>Recent Sales</h3>
-                </div>
-                <div class="card-body">
-                    <div id="recentSales">
-                        <p class="empty-text">No sales recorded yet.</p>
+        <!-- STEP 2: Transaction Form -->
+        <div class="transaction-view" id="transactionView">
+            <div class="back-button" id="backButton">
+                <i class="fas fa-arrow-left"></i> Back to Products
+            </div>
+
+            <div class="grid-2">
+                <!-- Sell Form -->
+                <section class="card">
+                    <div class="card-header">
+                        <h3>Record Sale</h3>
                     </div>
-                </div>
-            </section>
+                    <div class="card-body">
+                        <div class="selected-product-preview" id="selectedProductPreview">
+                            <!-- Product details will be shown here -->
+                        </div>
+
+                        <form id="sellForm">
+                            <div class="form-group">
+                                <label>Quantity *</label>
+                                <input type="number" id="quantity" min="1" required placeholder="Enter quantity">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Selling Price (per unit) *</label>
+                                <input type="number" id="sellingPrice" min="0" step="0.01" required placeholder="e.g. 30.00">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total Amount</label>
+                                <input type="text" id="totalAmount" readonly placeholder="₹0.00">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Estimated Profit</label>
+                                <input type="text" id="estimatedProfit" readonly placeholder="₹0.00">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Customer (optional)</label>
+                                <input type="text" id="customer" placeholder="Customer name">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Notes (optional)</label>
+                                <textarea id="notes" rows="2" placeholder="Any notes..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                                <i class="fas fa-check"></i> Complete Sale
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Recent Sales -->
+                <section class="card">
+                    <div class="card-header">
+                        <h3>Recent Sales</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentSales">
+                            <p class="empty-text">No sales recorded yet.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
 
     </div>

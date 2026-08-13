@@ -1,113 +1,226 @@
-// sell.js
+// sell.js - Two-step workflow: Select Product → Enter Transaction Details
 
 document.addEventListener('DOMContentLoaded', () => {
-    const productSelect = document.getElementById('productSelect');
-    const stockHint = document.getElementById('stockHint');
+    // Views
+    const productSelectionView = document.getElementById('productSelectionView');
+    const transactionView = document.getElementById('transactionView');
+    const backButton = document.getElementById('backButton');
+    
+    // Product grid
+    const productsGrid = document.getElementById('productsGrid');
+    const noProductsMsg = document.getElementById('noProductsMsg');
+    const categoryHeading = document.getElementById('categoryHeading');
+    
+    // Transaction form
+    const selectedProductPreview = document.getElementById('selectedProductPreview');
     const quantityInput = document.getElementById('quantity');
     const priceInput = document.getElementById('sellingPrice');
     const totalAmountInput = document.getElementById('totalAmount');
     const estimatedProfitInput = document.getElementById('estimatedProfit');
     const sellForm = document.getElementById('sellForm');
     const recentSalesDiv = document.getElementById('recentSales');
-
+    
+    let currentCategoryFilter = '';
     let selectedProduct = null;
-
-    // Load products into dropdown
-    loadProductsDropdown();
+    
+    // Category filter pills
+    const categoryPills = document.querySelectorAll('.category-filter-pill');
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            categoryPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentCategoryFilter = pill.dataset.category || '';
+            categoryHeading.textContent = pill.textContent.trim();
+            loadProductsGrid();
+        });
+    });
+    
+    // Back button
+    backButton.addEventListener('click', () => {
+        showProductSelection();
+    });
+    
+    // Initialize
+    showProductSelection();
     loadRecentSales();
-
-    // Get the latest purchase price for a product (buy records are stored newest-first)
+    
+    // STEP 1: Show product selection grid
+    function showProductSelection() {
+        productSelectionView.style.display = 'block';
+        transactionView.classList.remove('active');
+        selectedProduct = null;
+        loadProductsGrid();
+    }
+    
+    // STEP 2: Show transaction form
+    function showTransactionForm(product) {
+        selectedProduct = product;
+        productSelectionView.style.display = 'none';
+        transactionView.classList.add('active');
+        
+        // Show selected product preview
+        const stock = product.currentStock ?? product.stock ?? 0;
+        const costPrice = getLatestPurchasePrice(product.id);
+        
+        selectedProductPreview.innerHTML = `
+            <h4>${product.name}</h4>
+            <div class="meta">
+                SKU: ${product.sku} | Available: ${stock} ${product.unit}
+                ${costPrice > 0 ? `| Cost Price: ₹${costPrice.toFixed(2)}` : ''}
+            </div>
+        `;
+        
+        // Reset form
+        sellForm.reset();
+        totalAmountInput.value = '';
+        estimatedProfitInput.value = '';
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+    }
+    
+    // Load products into grid
+    function loadProductsGrid() {
+        let products = Storage.get('products') || [];
+        
+        // Filter by category
+        if (currentCategoryFilter) {
+            products = products.filter(p => p.category === currentCategoryFilter);
+        }
+        
+        // Filter out products with zero stock
+        products = products.filter(p => {
+            const stock = p.currentStock ?? p.stock ?? 0;
+            return stock > 0;
+        });
+        
+        productsGrid.innerHTML = '';
+        
+        if (products.length === 0) {
+            noProductsMsg.classList.remove('hidden');
+            noProductsMsg.textContent = currentCategoryFilter 
+                ? 'No products available in this category.' 
+                : 'No products available for sale.';
+            return;
+        }
+        
+        noProductsMsg.classList.add('hidden');
+        
+        products.forEach(product => {
+            const stock = product.currentStock ?? product.stock ?? 0;
+            const minStock = product.minStock ?? 0;
+            const isLow = minStock > 0 && stock <= minStock;
+            const stockClass = stock === 0 ? 'out' : (isLow ? 'low' : '');
+            
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.onclick = () => showTransactionForm(product);
+            
+            const imageHTML = product.image 
+                ? `<div class="product-card-media"><img src="${product.image}" alt="${product.name}" onerror="this.parentElement.style.display='none'"></div>`
+                : '';
+            
+            card.innerHTML = `
+                ${imageHTML}
+                <div class="product-card-body">
+                    <div class="product-card-title">${product.name}</div>
+                    <div class="product-card-sku">SKU: ${product.sku}</div>
+                    <div class="product-card-stock">
+                        <div class="stock-info">
+                            <span>Available</span>
+                            <span class="stock-qty ${stockClass}">${stock} ${product.unit}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (!product.image) {
+                card.querySelector('.product-card-body').style.paddingTop = '16px';
+            }
+            
+            productsGrid.appendChild(card);
+        });
+    }
+    
+    // Calculate totals
+    function calculateTotals() {
+        const qty = Number(quantityInput.value) || 0;
+        const price = Number(priceInput.value) || 0;
+        
+        totalAmountInput.value = '₹' + (qty * price).toFixed(2);
+        
+        if (selectedProduct) {
+            const costPrice = getLatestPurchasePrice(selectedProduct.id);
+            const profit = (price - costPrice) * qty;
+            estimatedProfitInput.value = '₹' + profit.toFixed(2);
+            
+            // Change color based on profit/loss
+            if (profit >= 0) {
+                estimatedProfitInput.style.color = 'var(--success)';
+            } else {
+                estimatedProfitInput.style.color = 'var(--danger)';
+            }
+        }
+    }
+    
+    quantityInput.addEventListener('input', calculateTotals);
+    priceInput.addEventListener('input', calculateTotals);
+    
+    // Get latest purchase price
     function getLatestPurchasePrice(productId) {
         const purchases = Storage.get('purchases') || [];
         const productPurchases = purchases.filter(p => p.productId === productId);
         return productPurchases.length > 0 ? productPurchases[0].purchasePrice : 0;
     }
-
-    // Recalculate totals whenever inputs change
-    function calculateTotals() {
-        const qty = Number(quantityInput.value) || 0;
-        const price = Number(priceInput.value) || 0;
-
-        totalAmountInput.value = '₹' + (qty * price).toFixed(2);
-
-        if (selectedProduct) {
-            const costPrice = getLatestPurchasePrice(selectedProduct.id);
-            const profit = (price - costPrice) * qty;
-            estimatedProfitInput.value = '₹' + profit.toFixed(2);
-        }
-    }
-
-    quantityInput.addEventListener('input', calculateTotals);
-    priceInput.addEventListener('input', calculateTotals);
-
-    // Show stock info when a product is selected
-    productSelect.addEventListener('change', () => {
-        const productId = productSelect.value;
-        const products = Storage.get('products') || [];
-        selectedProduct = products.find(p => p.id === productId) || null;
-
-        if (selectedProduct) {
-            const displayStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
-            stockHint.textContent = `Available stock: ${displayStock} ${selectedProduct.unit}`;
-            const costPrice = getLatestPurchasePrice(selectedProduct.id);
-            if (costPrice > 0) {
-                stockHint.textContent += ` | Cost price: ₹${costPrice.toFixed(2)}`;
-            }
-            const price = Number(priceInput.value) || 0;
-            const qty = Number(quantityInput.value) || 0;
-            estimatedProfitInput.value = '₹' + ((price - costPrice) * qty).toFixed(2);
-        } else {
-            stockHint.textContent = '';
-            estimatedProfitInput.value = '';
-        }
-
-        calculateTotals();
-    });
-
+    
     // Handle form submit
     sellForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
-        const productId = productSelect.value;
+        
+        if (!selectedProduct) {
+            showToast('No product selected', 'error');
+            return;
+        }
+        
         const quantity = Number(quantityInput.value);
         const sellingPrice = Number(priceInput.value);
         const customer = document.getElementById('customer').value.trim();
         const notes = document.getElementById('notes').value.trim();
-
-        if (!productId || !selectedProduct) {
-            showToast('Please select a product', 'error');
-            return;
-        }
-
+        
         if (!quantity || quantity <= 0) {
             showToast('Please enter a valid quantity', 'error');
             return;
         }
-
-        const availableSaleStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
-        if (quantity > availableSaleStock) {
-            showToast(`Insufficient stock! Only ${availableSaleStock} ${selectedProduct.unit} available.`, 'error');
+        
+        if (!sellingPrice || sellingPrice < 0) {
+            showToast('Please enter a valid selling price', 'error');
             return;
         }
-
-        const costPrice = getLatestPurchasePrice(productId);
+        
+        const availableStock = selectedProduct.currentStock ?? selectedProduct.stock ?? 0;
+        if (quantity > availableStock) {
+            showToast(`Insufficient stock! Only ${availableStock} ${selectedProduct.unit} available.`, 'error');
+            return;
+        }
+        
+        const costPrice = getLatestPurchasePrice(selectedProduct.id);
         const totalAmount = quantity * sellingPrice;
         const profit = (sellingPrice - costPrice) * quantity;
-
-        // Decrement stock
+        
+        // Update stock
         let products = Storage.get('products') || [];
-        const productIndex = products.findIndex(p => p.id === productId);
+        const productIndex = products.findIndex(p => p.id === selectedProduct.id);
         if (productIndex !== -1) {
-            const currentStockValue = (products[productIndex].currentStock ?? products[productIndex].stock ?? 0) - quantity;
-            products[productIndex].currentStock = currentStockValue;
-            products[productIndex].stock = currentStockValue;
+            const newStock = availableStock - quantity;
+            products[productIndex].currentStock = newStock;
+            products[productIndex].stock = newStock;
             Storage.set('products', products);
         }
-
-        // Save sale record
+        
+        // Save sale
         const sale = {
             id: Date.now().toString(),
-            productId: productId,
+            productId: selectedProduct.id,
             productName: selectedProduct.name,
             sku: selectedProduct.sku,
             quantity: quantity,
@@ -119,64 +232,44 @@ document.addEventListener('DOMContentLoaded', () => {
             notes: notes,
             date: new Date().toISOString()
         };
-
+        
         let sales = Storage.get('sales') || [];
-        sales.unshift(sale); // add to beginning
+        sales.unshift(sale);
         Storage.set('sales', sales);
-
-        // Reset form
-        sellForm.reset();
-        totalAmountInput.value = '';
-        estimatedProfitInput.value = '';
-        stockHint.textContent = '';
-        selectedProduct = null;
-        loadProductsDropdown();
+        
+        const profitText = profit >= 0 
+            ? `Profit: ₹${profit.toFixed(2)}` 
+            : `Loss: ₹${Math.abs(profit).toFixed(2)}`;
+        showToast(`Sale completed! ${profitText}`, 'success');
+        
         loadRecentSales();
-
-        const profitText = profit >= 0 ? `₹${profit.toFixed(2)} profit` : `₹${Math.abs(profit).toFixed(2)} loss`;
-        showToast(`Sale saved successfully! ${profitText}.`, 'success');
+        showProductSelection();
     });
-
-    // Load products into select dropdown
-    function loadProductsDropdown() {
-        const products = Storage.get('products') || [];
-        productSelect.innerHTML = '<option value="">-- Select Product --</option>';
-
-        products.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.id;
-            const displayStock = product.currentStock ?? product.stock ?? 0;
-            option.textContent = `${product.name} (${product.sku}) - Stock: ${displayStock}`;
-            productSelect.appendChild(option);
-        });
-
-        stockHint.textContent = '';
-    }
-
-    // Show recent sales
+    
+    // Load recent sales
     function loadRecentSales() {
         const sales = Storage.get('sales') || [];
-
+        
         if (sales.length === 0) {
             recentSalesDiv.innerHTML = '<p class="empty-text">No sales recorded yet.</p>';
             return;
         }
-
+        
         recentSalesDiv.innerHTML = '';
-
+        
         sales.slice(0, 8).forEach(s => {
             const div = document.createElement('div');
             div.className = 'purchase-item';
-
+            
             const profit = s.profit || 0;
             const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
             const profitLabel = profit >= 0 ? 'Profit' : 'Loss';
-
+            
             div.innerHTML = `
                 <div class="title">${s.productName}</div>
                 <div class="meta">
                     Qty: ${s.quantity} × ₹${s.sellingPrice.toFixed(2)} = ₹${s.totalAmount.toFixed(2)}
-                    <span class="${profitClass}"> ${profitLabel}: ₹${Math.abs(profit).toFixed(2)}</span>
+                    <span class="${profitClass}"> | ${profitLabel}: ₹${Math.abs(profit).toFixed(2)}</span>
                     <br>
                     ${new Date(s.date).toLocaleString()}
                 </div>
