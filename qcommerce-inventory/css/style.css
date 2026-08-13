@@ -1610,6 +1610,25 @@ body.auth-page {
     background: var(--primary);
 }
 
+/* Dark mode — orange & black scrollbar for dashboard sections */
+[data-theme="dark"] .dashboard-scroll-container {
+    scrollbar-color: #ff7a00 #111118;
+}
+
+[data-theme="dark"] .dashboard-scroll-container::-webkit-scrollbar-track {
+    background: #111118;
+    border-radius: 10px;
+}
+
+[data-theme="dark"] .dashboard-scroll-container::-webkit-scrollbar-thumb {
+    background: #ff7a00;
+    border-radius: 10px;
+}
+
+[data-theme="dark"] .dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #ff9a30;
+}
+
 /* ========== DASHBOARD COLLECTION LAYOUT ========== */
 .dash-grid {
     display: grid;
