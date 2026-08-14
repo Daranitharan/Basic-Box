@@ -248,6 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(`Purchase completed! Stock updated to ${newStock} ${selectedProduct.unit}`, 'success');
         await loadRecentPurchases();
         showProductSelection();
+        
+        // Trigger dashboard refresh
+        if (typeof window.triggerDashboardRefresh === 'function') {
+            window.triggerDashboardRefresh();
+        }
     });
     
     // Load recent purchases — filtered by productId when provided

@@ -195,6 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.classList.remove('active');
             loadProducts();
             showToast(editId ? 'Product updated successfully!' : 'Product added successfully!', 'success');
+            
+            // Trigger dashboard refresh
+            if (typeof window.triggerDashboardRefresh === 'function') {
+                window.triggerDashboardRefresh();
+            }
         }
 
         if (imageInput && imageInput.files && imageInput.files[0]) {
@@ -396,6 +401,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!result.ok) { showToast('Error deleting product.', 'error'); return; }
         loadProducts();
         showToast('Product deleted', 'info');
+        
+        // Trigger dashboard refresh
+        if (typeof window.triggerDashboardRefresh === 'function') {
+            window.triggerDashboardRefresh();
+        }
     };
 
     const barcodeFile = document.getElementById('barcodeFile');

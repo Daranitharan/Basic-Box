@@ -285,6 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         await loadRecentSales();
         showProductSelection();
+        
+        // Trigger dashboard refresh
+        if (typeof window.triggerDashboardRefresh === 'function') {
+            window.triggerDashboardRefresh();
+        }
     });
     
     // Load recent sales — filtered by productId when provided

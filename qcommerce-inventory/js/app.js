@@ -1,5 +1,8 @@
 // app.js - Dashboard Logic
 
+let refreshInterval = null;
+let isRefreshing = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Show current date in header
     const dateEl = document.getElementById('current-date');
@@ -11,7 +14,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await updateDashboard();
     setupDashboardSearch();
+    startAutoRefresh();
+    setupManualRefresh();
 });
+
+// Auto-refresh dashboard every 30 seconds
+function startAutoRefresh() {
+    // Clear any existing interval
+    if (refreshInterval) clearInterval(refreshInterval);
+    
+    refreshInterval = setInterval(async () => {
+        if (!isRefreshing && document.visibilityState === 'visible') {
+            await updateDashboard(true); // silent refresh
+        }
+    }, 30000); // 30 seconds
+}
+
+// Stop auto-refresh when page becomes hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    } else if (document.visibilityState === 'visible') {
+        startAutoRefresh();
+        // Refresh immediately when page becomes visible
+        if (!isRefreshing) updateDashboard(true);
+    }
+});
+
+// Manual refresh button
+function setupManualRefresh() {
+    // Refresh button already exists in HTML, just add event listener
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            if (isRefreshing) return;
+            refreshBtn.querySelector('i').classList.add('fa-spin');
+            await updateDashboard();
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+            showToast('Dashboard refreshed!', 'success');
+        });
+    }
+}
 
 // Animate a number from 0 to target value
 function animateValue(el, end, isCurrency, isInteger) {
@@ -33,97 +79,136 @@ function animateValue(el, end, isCurrency, isInteger) {
     requestAnimationFrame(tick);
 }
 
-async function updateDashboard() {
-    // Fetch from Supabase (or localStorage fallback via DB layer)
-    const products  = await DB.getProducts();
-    const purchases = await DB.getPurchases();
-    const sales     = await DB.getSales();
-
-    // 1. Total Products
-    animateValue(document.getElementById('total-products'), products.length, false, true);
-
-    // 2. Stock Value
-    let stockValue = 0;
-    products.forEach(product => {
-        const productPurchases = purchases.filter(p => p.productId === product.id);
-        const currentStockValue = product.currentStock ?? product.stock ?? 0;
-        if (productPurchases.length > 0) {
-            stockValue += currentStockValue * productPurchases[0].purchasePrice;
+async function updateDashboard(silent = false) {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    
+    try {
+        // Show connection status for non-silent updates
+        if (!silent) {
+            showConnectionStatus('connecting');
         }
-    });
-    animateValue(document.getElementById('stock-value'), stockValue, true, false);
 
-    // 3. Total Sales
-    let totalSales = 0;
-    sales.forEach(s => { totalSales += s.totalAmount || 0; });
-    animateValue(document.getElementById('total-sales'), totalSales, true, false);
+        // Show loading indicator on manual refresh
+        if (!silent) {
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.querySelector('i').classList.add('fa-spin');
+            }
+        }
 
-    // 4. Total Profit
-    let totalProfit = 0;
-    sales.forEach(s => { totalProfit += s.profit || 0; });
-    animateValue(document.getElementById('total-profit'), totalProfit, true, false);
+        // Fetch from Supabase (or localStorage fallback via DB layer)
+        const products  = await DB.getProducts();
+        const purchases = await DB.getPurchases();
+        const sales     = await DB.getSales();
 
-    // 5. Today's Profit
-    const today = new Date().toDateString();
-    let todayProfit = 0;
-    sales.forEach(s => {
-        if (new Date(s.date).toDateString() === today) todayProfit += s.profit || 0;
-    });
-    animateValue(document.getElementById('today-profit'), todayProfit, true, false);
+        // 1. Total Products
+        animateValue(document.getElementById('total-products'), products.length, false, true);
 
-    // 6. Profit Margin
-    const margin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
-    animateValue(document.getElementById('profit-margin'), margin, false, false);
+        // 2. Stock Value
+        let stockValue = 0;
+        products.forEach(product => {
+            const productPurchases = purchases.filter(p => p.productId === product.id);
+            const currentStockValue = product.currentStock ?? product.stock ?? 0;
+            if (productPurchases.length > 0) {
+                stockValue += currentStockValue * productPurchases[0].purchasePrice;
+            }
+        });
+        animateValue(document.getElementById('stock-value'), stockValue, true, false);
 
-    // 7. Total Orders
-    animateValue(document.getElementById('total-orders'), sales.length, false, true);
+        // 3. Total Sales
+        let totalSales = 0;
+        sales.forEach(s => { totalSales += s.totalAmount || 0; });
+        animateValue(document.getElementById('total-sales'), totalSales, true, false);
 
-    // 8. Low Stock Alerts
-    updateLowStockAlerts(products);
-    updateGreeting();
+        // 4. Total Profit
+        let totalProfit = 0;
+        sales.forEach(s => { totalProfit += s.profit || 0; });
+        animateValue(document.getElementById('total-profit'), totalProfit, true, false);
 
-    // 9. Recent Transactions (Today Only)
-    const recentDiv = document.getElementById('recent-transactions');
-    const today = new Date().toDateString();
-    
-    // Filter transactions to today only
-    const todayPurchases = purchases.filter(p => new Date(p.date).toDateString() === today);
-    const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
-    
-    const allTransactions = [
-        ...todayPurchases.map(p => ({ ...p, type: 'purchase' })),
-        ...todaySales.map(s => ({ ...s, type: 'sale' }))
-    ];
-    allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // 5. Today's Profit
+        const today = new Date().toDateString();
+        let todayProfit = 0;
+        sales.forEach(s => {
+            if (new Date(s.date).toDateString() === today) todayProfit += s.profit || 0;
+        });
+        animateValue(document.getElementById('today-profit'), todayProfit, true, false);
 
-    if (allTransactions.length === 0) {
-        if (recentDiv) recentDiv.innerHTML = `<p class="empty-text">No transactions today.</p>`;
-        return;
-    }
+        // 6. Profit Margin
+        const margin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
+        animateValue(document.getElementById('profit-margin'), margin, false, false);
 
-    let html = '';
-    allTransactions.forEach(t => {
-        if (t.type === 'purchase') {
-            html += `
-                <div class="purchase-item">
-                    <div class="title">Bought: ${t.productName}</div>
-                    <div class="meta">
-                        Qty: ${t.quantity} × ₹${Number(t.purchasePrice).toFixed(2)} = ₹${Number(t.totalCost).toFixed(2)}
-                        <br>${new Date(t.date).toLocaleString()}
-                    </div>
-                </div>`;
+        // 7. Total Orders
+        animateValue(document.getElementById('total-orders'), sales.length, false, true);
+
+        // 8. Low Stock Alerts
+        updateLowStockAlerts(products);
+        updateGreeting();
+
+        // 9. Recent Transactions (Today Only)
+        const recentDiv = document.getElementById('recent-transactions');
+        const today = new Date().toDateString();
+        
+        // Filter transactions to today only
+        const todayPurchases = purchases.filter(p => new Date(p.date).toDateString() === today);
+        const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
+        
+        const allTransactions = [
+            ...todayPurchases.map(p => ({ ...p, type: 'purchase' })),
+            ...todaySales.map(s => ({ ...s, type: 'sale' }))
+        ];
+        allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (allTransactions.length === 0) {
+            if (recentDiv) recentDiv.innerHTML = `<p class="empty-text">No transactions today.</p>`;
         } else {
-            html += `
-                <div class="purchase-item">
-                    <div class="title">Sold: ${t.productName}</div>
-                    <div class="meta">
-                        Qty: ${t.quantity} | Profit: ₹${Number(t.profit || 0).toFixed(2)}
-                        <br>${new Date(t.date).toLocaleString()}
-                    </div>
-                </div>`;
+            let html = '';
+            allTransactions.forEach(t => {
+                if (t.type === 'purchase') {
+                    html += `
+                        <div class="purchase-item">
+                            <div class="title">Bought: ${t.productName}</div>
+                            <div class="meta">
+                                Qty: ${t.quantity} × ₹${Number(t.purchasePrice).toFixed(2)} = ₹${Number(t.totalCost).toFixed(2)}
+                                <br>${new Date(t.date).toLocaleString()}
+                            </div>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="purchase-item">
+                            <div class="title">Sold: ${t.productName}</div>
+                            <div class="meta">
+                                Qty: ${t.quantity} | Profit: ₹${Number(t.profit || 0).toFixed(2)}
+                                <br>${new Date(t.date).toLocaleString()}
+                            </div>
+                        </div>`;
+                }
+            });
+            if (recentDiv) recentDiv.innerHTML = html;
         }
-    });
-    if (recentDiv) recentDiv.innerHTML = html;
+        
+        // Update last refresh time indicator
+        updateLastRefreshTime();
+        
+        // Remove connection status
+        if (!silent) {
+            showConnectionStatus();
+        }
+        
+    } catch (error) {
+        console.error('Error updating dashboard:', error);
+        if (!silent) {
+            showToast('Error refreshing dashboard', 'error');
+        }
+    } finally {
+        isRefreshing = false;
+        
+        // Remove loading indicator
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+        }
+    }
 }
 
 function updateLowStockAlerts(products) {
@@ -198,3 +283,76 @@ function setupDashboardSearch() {
         });
     }
 }
+
+// Update last refresh time indicator
+function updateLastRefreshTime() {
+    // Add or update refresh time in page subtitle
+    const subtitle = document.querySelector('.page-subtitle');
+    if (subtitle) {
+        const time = new Date().toLocaleTimeString('en-IN', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        // Remove existing refresh time if present
+        let text = subtitle.textContent.replace(/ • Last updated: \d{2}:\d{2}:\d{2}/, '');
+        subtitle.textContent = `${text} • Last updated: ${time}`;
+        
+        // Add a subtle flash animation to indicate refresh
+        subtitle.style.opacity = '0.7';
+        setTimeout(() => {
+            subtitle.style.opacity = '1';
+        }, 200);
+    }
+}
+
+// Add connection status indicator
+function showConnectionStatus(status) {
+    const existingStatus = document.getElementById('connectionStatus');
+    if (existingStatus) {
+        existingStatus.remove();
+    }
+    
+    if (status === 'connecting') {
+        const statusEl = document.createElement('div');
+        statusEl.id = 'connectionStatus';
+        statusEl.innerHTML = '<i class="fas fa-wifi"></i> Syncing...';
+        statusEl.style.cssText = `
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            background: var(--accent-grad); 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 0.85rem; 
+            font-weight: 500; 
+            z-index: 1000; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: pulse 2s infinite;
+        `;
+        document.body.appendChild(statusEl);
+    }
+}
+
+// Add CSS animation for connection status
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+
+// Real-time updates when user performs actions
+function triggerDashboardRefresh() {
+    if (!isRefreshing) {
+        updateDashboard(true); // silent refresh
+    }
+}
+
+// Export for use by other scripts
+window.triggerDashboardRefresh = triggerDashboardRefresh;
