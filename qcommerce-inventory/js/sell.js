@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentCategoryFilter = '';
     let selectedProduct = null;
+    let _costPrice = 0; // cached cost price for selected product
     
     // Category filter dropdown
     const categoryFilterTrigger = document.getElementById('categoryFilterTrigger');
@@ -89,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     showProductSelection();
     loadRecentSales();
+
+    // Product grid search
+    const productGridSearch = document.getElementById('productGridSearch');
+    if (productGridSearch) {
+        productGridSearch.addEventListener('input', () => loadProductsGrid());
+    }
     
     // STEP 1: Show product selection grid
     function showProductSelection() {
@@ -99,41 +106,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // STEP 2: Show transaction form
-    function showTransactionForm(product) {
+    async function showTransactionForm(product) {
         selectedProduct = product;
         productSelectionView.style.display = 'none';
         transactionView.classList.add('active');
-        
-        // Show selected product preview
+
+        // Fetch cost price async, then store and show preview
+        _costPrice = await getLatestPurchasePrice(product.id);
         const stock = product.currentStock ?? product.stock ?? 0;
-        const costPrice = getLatestPurchasePrice(product.id);
-        
+
         selectedProductPreview.innerHTML = `
             <h4>${product.name}</h4>
             <div class="meta">
                 SKU: ${product.sku} | Available: ${stock} ${product.unit}
-                ${costPrice > 0 ? `| Cost Price: ₹${costPrice.toFixed(2)}` : ''}
+                ${_costPrice > 0 ? `| <strong>Cost Price: ₹${Number(_costPrice).toFixed(2)}</strong>` : ''}
             </div>
         `;
-        
+
         // Reset form
         sellForm.reset();
         totalAmountInput.value = '';
         estimatedProfitInput.value = '';
-        
-        // Scroll to top
+        estimatedProfitInput.style.color = '';
+
+        // Load recent sales for THIS product
+        await loadRecentSales(product.id);
+
         window.scrollTo(0, 0);
     }
     
     // Load products into grid
     async function loadProductsGrid() {
         let products = await DB.getProducts();
-        
+
         // Filter by category
         if (currentCategoryFilter) {
             products = products.filter(p => p.category === currentCategoryFilter);
         }
-        
+
+        // Filter by search term
+        const searchTerm = (document.getElementById('productGridSearch')?.value || '').toLowerCase().trim();
+        if (searchTerm) {
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(searchTerm) ||
+                (p.sku || '').toLowerCase().includes(searchTerm)
+            );
+        }
+
         // Filter out products with zero stock
         products = products.filter(p => {
             const stock = p.currentStock ?? p.stock ?? 0;
@@ -192,31 +211,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateTotals() {
         const qty = Number(quantityInput.value) || 0;
         const price = Number(priceInput.value) || 0;
-        
+
         totalAmountInput.value = '₹' + (qty * price).toFixed(2);
-        
-        if (selectedProduct) {
-            const costPrice = getLatestPurchasePrice(selectedProduct.id);
-            const profit = (price - costPrice) * qty;
+
+        if (selectedProduct && typeof _costPrice === 'number') {
+            const profit = (price - _costPrice) * qty;
             estimatedProfitInput.value = '₹' + profit.toFixed(2);
-            
-            // Change color based on profit/loss
-            if (profit >= 0) {
-                estimatedProfitInput.style.color = 'var(--success)';
-            } else {
-                estimatedProfitInput.style.color = 'var(--danger)';
-            }
+            estimatedProfitInput.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
         }
     }
     
     quantityInput.addEventListener('input', calculateTotals);
     priceInput.addEventListener('input', calculateTotals);
     
-    // Get latest purchase price
+    // Get latest purchase price for a product
     async function getLatestPurchasePrice(productId) {
         const purchases = await DB.getPurchases();
-        const productPurchases = purchases.filter(p => p.productId === productId);
-        return productPurchases.length > 0 ? productPurchases[0].purchasePrice : 0;
+        const productPurchases = purchases
+            .filter(p => p.productId === productId)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        return productPurchases.length > 0 ? Number(productPurchases[0].purchasePrice) : 0;
     }
     
     // Handle form submit
@@ -239,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        const costPrice = await getLatestPurchasePrice(selectedProduct.id);
+        const costPrice = _costPrice;
         const totalAmount = quantity * sellingPrice;
         const profit = (sellingPrice - costPrice) * quantity;
         
@@ -273,32 +287,32 @@ document.addEventListener('DOMContentLoaded', () => {
         showProductSelection();
     });
     
-    // Load recent sales
-    async function loadRecentSales() {
-        const sales = await DB.getSales();
-        
+    // Load recent sales — filtered by productId when provided
+    async function loadRecentSales(productId = null) {
+        let sales = await DB.getSales();
+
+        if (productId) {
+            sales = sales.filter(s => s.productId === productId);
+        }
+
         if (sales.length === 0) {
-            recentSalesDiv.innerHTML = '<p class="empty-text">No sales recorded yet.</p>';
+            recentSalesDiv.innerHTML = `<p class="empty-text">${productId ? 'No sales recorded for this product yet.' : 'No sales recorded yet.'}</p>`;
             return;
         }
-        
+
         recentSalesDiv.innerHTML = '';
-        
-        sales.slice(0, 8).forEach(s => {
+        sales.slice(0, 10).forEach(s => {
             const div = document.createElement('div');
             div.className = 'purchase-item';
-            
             const profit = s.profit || 0;
             const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
             const profitLabel = profit >= 0 ? 'Profit' : 'Loss';
-            
             div.innerHTML = `
                 <div class="title">${s.productName}</div>
                 <div class="meta">
-                    Qty: ${s.quantity} × ₹${s.sellingPrice.toFixed(2)} = ₹${s.totalAmount.toFixed(2)}
+                    Qty: ${s.quantity} × ₹${Number(s.sellingPrice).toFixed(2)} = ₹${Number(s.totalAmount).toFixed(2)}
                     <span class="${profitClass}"> | ${profitLabel}: ₹${Math.abs(profit).toFixed(2)}</span>
-                    <br>
-                    ${new Date(s.date).toLocaleString()}
+                    <br>${new Date(s.date).toLocaleString()}
                 </div>
             `;
             recentSalesDiv.appendChild(div);

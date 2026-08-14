@@ -161,6 +161,46 @@
             50% { opacity: 0.7; }
         }
 
+        /* Product grid search */
+        .product-grid-search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 320px;
+        }
+
+        .product-grid-search-wrap i {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-faint);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .product-grid-search {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        .product-grid-search:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .product-grid-search::placeholder {
+            color: var(--text-faint);
+        }
+
         /* Product Grid */
         .products-grid {
             display: grid;
@@ -334,8 +374,15 @@
                 <p class="page-subtitle">Select a product to sell</p>
             </div>
             <div class="header-right">
+                <button class="notif-btn" id="notifBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                     <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn btn-secondary logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
         </header>
@@ -345,58 +392,65 @@
             <div class="card-header" style="display: block;">
                 <h3 id="categoryHeading" style="margin-bottom: 12px;">All Products</h3>
                 <!-- Category Filter Dropdown -->
-                <div class="custom-category-filter">
-                    <button class="category-filter-trigger" id="categoryFilterTrigger">
-                        <span class="selected-category-display">
-                            <i class="fas fa-th"></i> All Products
-                        </span>
-                        <i class="fas fa-chevron-down category-filter-arrow"></i>
-                    </button>
-                    <div class="category-filter-dropdown" id="categoryFilterDropdown">
-                        <div class="category-filter-list">
-                            <div class="category-option-filter active" data-category="">
+                <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-top: 8px;">
+                    <div class="custom-category-filter">
+                        <button class="category-filter-trigger" id="categoryFilterTrigger">
+                            <span class="selected-category-display">
                                 <i class="fas fa-th"></i> All Products
-                            </div>
-                            <div class="category-option-filter" data-category="biscuit">
-                                <i class="fas fa-cookie-bite"></i> Biscuit
-                            </div>
-                            <div class="category-option-filter" data-category="juice">
-                                <i class="fas fa-glass-whiskey"></i> Juice
-                            </div>
-                            <div class="category-option-filter" data-category="food">
-                                <i class="fas fa-utensils"></i> Food
-                            </div>
-                            <div class="category-option-filter" data-category="cool drink">
-                                <i class="fas fa-mug-hot"></i> Cool Drink
-                            </div>
-                            <div class="category-option-filter" data-category="vegetables">
-                                <i class="fas fa-leaf"></i> Vegetables
-                            </div>
-                            <div class="category-option-filter" data-category="fruits">
-                                <i class="fas fa-apple-alt"></i> Fruits
-                            </div>
-                            <div class="category-option-filter" data-category="medicines">
-                                <i class="fas fa-pills"></i> Medicines
-                            </div>
-                            <div class="category-option-filter" data-category="cleaning essential">
-                                <i class="fas fa-spray-can"></i> Cleaning Essential
-                            </div>
-                            <div class="category-option-filter" data-category="personal care">
-                                <i class="fas fa-spa"></i> Personal Care
-                            </div>
-                            <div class="category-option-filter" data-category="grocery items">
-                                <i class="fas fa-shopping-basket"></i> Grocery Items
-                            </div>
-                            <div class="category-option-filter" data-category="chips">
-                                <i class="fas fa-fire"></i> Chips
-                            </div>
-                            <div class="category-option-filter" data-category="chocolate">
-                                <i class="fas fa-candy-cane"></i> Chocolate
-                            </div>
-                            <div class="category-option-filter" data-category="others">
-                                <i class="fas fa-box-open"></i> Others
+                            </span>
+                            <i class="fas fa-chevron-down category-filter-arrow"></i>
+                        </button>
+                        <div class="category-filter-dropdown" id="categoryFilterDropdown">
+                            <div class="category-filter-list">
+                                <div class="category-option-filter active" data-category="">
+                                    <i class="fas fa-th"></i> All Products
+                                </div>
+                                <div class="category-option-filter" data-category="biscuit">
+                                    <i class="fas fa-cookie-bite"></i> Biscuit
+                                </div>
+                                <div class="category-option-filter" data-category="juice">
+                                    <i class="fas fa-glass-whiskey"></i> Juice
+                                </div>
+                                <div class="category-option-filter" data-category="food">
+                                    <i class="fas fa-utensils"></i> Food
+                                </div>
+                                <div class="category-option-filter" data-category="cool drink">
+                                    <i class="fas fa-mug-hot"></i> Cool Drink
+                                </div>
+                                <div class="category-option-filter" data-category="vegetables">
+                                    <i class="fas fa-leaf"></i> Vegetables
+                                </div>
+                                <div class="category-option-filter" data-category="fruits">
+                                    <i class="fas fa-apple-alt"></i> Fruits
+                                </div>
+                                <div class="category-option-filter" data-category="medicines">
+                                    <i class="fas fa-pills"></i> Medicines
+                                </div>
+                                <div class="category-option-filter" data-category="cleaning essential">
+                                    <i class="fas fa-spray-can"></i> Cleaning Essential
+                                </div>
+                                <div class="category-option-filter" data-category="personal care">
+                                    <i class="fas fa-spa"></i> Personal Care
+                                </div>
+                                <div class="category-option-filter" data-category="grocery items">
+                                    <i class="fas fa-shopping-basket"></i> Grocery Items
+                                </div>
+                                <div class="category-option-filter" data-category="chips">
+                                    <i class="fas fa-fire"></i> Chips
+                                </div>
+                                <div class="category-option-filter" data-category="chocolate">
+                                    <i class="fas fa-candy-cane"></i> Chocolate
+                                </div>
+                                <div class="category-option-filter" data-category="others">
+                                    <i class="fas fa-box-open"></i> Others
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <!-- Product Search -->
+                    <div class="product-grid-search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="productGridSearch" class="product-grid-search" placeholder="Search products...">
                     </div>
                 </div>
             </div>

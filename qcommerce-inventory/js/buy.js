@@ -88,6 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     showProductSelection();
     loadRecentPurchases();
+
+    // Product grid search
+    const productGridSearch = document.getElementById('productGridSearch');
+    if (productGridSearch) {
+        productGridSearch.addEventListener('input', () => loadProductsGrid());
+    }
     
     // STEP 1: Show product selection grid
     function showProductSelection() {
@@ -98,36 +104,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // STEP 2: Show transaction form
-    function showTransactionForm(product) {
+    async function showTransactionForm(product) {
         selectedProduct = product;
         productSelectionView.style.display = 'none';
         transactionView.classList.add('active');
-        
-        // Show selected product preview
+
+        // Fetch latest purchase price for this product
+        const purchases = await DB.getPurchases();
+        const prevPurchases = purchases
+            .filter(p => p.productId === product.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        const lastPrice = prevPurchases.length > 0 ? Number(prevPurchases[0].purchasePrice) : 0;
+
         const stock = product.currentStock ?? product.stock ?? 0;
-        
         selectedProductPreview.innerHTML = `
             <h4>${product.name}</h4>
             <div class="meta">
                 SKU: ${product.sku} | Current Stock: ${stock} ${product.unit}
+                ${lastPrice > 0 ? `| <strong>Last Bought: ₹${lastPrice.toFixed(2)}</strong>` : ''}
             </div>
         `;
-        
+
         // Reset form
         buyForm.reset();
         totalCostInput.value = '';
-        
-        // Scroll to top
+
+        // Load recent purchases for THIS product
+        await loadRecentPurchases(product.id);
+
         window.scrollTo(0, 0);
     }
     
-    // Load products into grid
+    // Load products into grid (buy.js)
     async function loadProductsGrid() {
         let products = await DB.getProducts();
-        
+
         // Filter by category
         if (currentCategoryFilter) {
             products = products.filter(p => p.category === currentCategoryFilter);
+        }
+
+        // Filter by search term
+        const searchTerm = (document.getElementById('productGridSearch')?.value || '').toLowerCase().trim();
+        if (searchTerm) {
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(searchTerm) ||
+                (p.sku || '').toLowerCase().includes(searchTerm)
+            );
         }
         
         productsGrid.innerHTML = '';
@@ -227,27 +250,29 @@ document.addEventListener('DOMContentLoaded', () => {
         showProductSelection();
     });
     
-    // Load recent purchases
-    async function loadRecentPurchases() {
-        const purchases = await DB.getPurchases();
-        
+    // Load recent purchases — filtered by productId when provided
+    async function loadRecentPurchases(productId = null) {
+        let purchases = await DB.getPurchases();
+
+        if (productId) {
+            purchases = purchases.filter(p => p.productId === productId);
+        }
+
         if (purchases.length === 0) {
-            recentPurchasesDiv.innerHTML = '<p class="empty-text">No purchases recorded yet.</p>';
+            recentPurchasesDiv.innerHTML = `<p class="empty-text">${productId ? 'No purchases recorded for this product yet.' : 'No purchases recorded yet.'}</p>`;
             return;
         }
-        
+
         recentPurchasesDiv.innerHTML = '';
-        
-        purchases.slice(0, 8).forEach(p => {
+        purchases.slice(0, 10).forEach(p => {
             const div = document.createElement('div');
             div.className = 'purchase-item';
             div.innerHTML = `
                 <div class="title">${p.productName}</div>
                 <div class="meta">
-                    Qty: ${p.quantity} × ₹${p.purchasePrice.toFixed(2)} = ₹${p.totalCost.toFixed(2)}
+                    Qty: ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}
                     ${p.supplier ? `| Supplier: ${p.supplier}` : ''}
-                    <br>
-                    ${new Date(p.date).toLocaleString()}
+                    <br>${new Date(p.date).toLocaleString()}
                 </div>
             `;
             recentPurchasesDiv.appendChild(div);

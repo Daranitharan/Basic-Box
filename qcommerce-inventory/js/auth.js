@@ -125,11 +125,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Bind all logout buttons
+    // Inject logout confirmation modal into page (once)
+    if (!isAuthPage && !document.getElementById('logoutOverlay')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutDialogTitle">
+                <div class="logout-dialog">
+                    <div class="logout-dialog-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <h3 id="logoutDialogTitle">Logout?</h3>
+                    <p>Are you sure you want to log out of your Basics Box account?</p>
+                    <div class="logout-dialog-actions">
+                        <button class="btn btn-secondary" id="logoutCancelBtn">Cancel</button>
+                        <button class="btn btn-danger" id="logoutConfirmBtn">
+                            <i class="fas fa-sign-out-alt"></i> Yes, Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        document.getElementById('logoutCancelBtn').addEventListener('click', () => {
+            document.getElementById('logoutOverlay').classList.remove('active');
+        });
+
+        document.getElementById('logoutConfirmBtn').addEventListener('click', () => {
+            logoutUser();
+        });
+
+        // Close on backdrop click
+        document.getElementById('logoutOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                e.currentTarget.classList.remove('active');
+            }
+        });
+    }
+
+    // Bind all logout buttons to show confirmation instead of immediate logout
     document.querySelectorAll('.logout-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            logoutUser();
+            const overlay = document.getElementById('logoutOverlay');
+            if (overlay) {
+                overlay.classList.add('active');
+            } else {
+                logoutUser(); // fallback
+            }
         });
     });
+
+    // Notification bell → go to notifications page
+    const notifBtn = document.getElementById('notifBtn');
+    if (notifBtn) {
+        notifBtn.addEventListener('click', () => {
+            // Determine correct path based on current page location
+            const path = window.location.pathname.replace(/\\/g, '/');
+            let notifUrl = 'pages/notifications.html';
+            if (path.includes('/qcommerce-inventory/pages/')) {
+                notifUrl = 'notifications.html';
+            }
+            window.location.href = notifUrl;
+        });
+        // Update badge count from low-stock products
+        updateNotifBadge();
+    }
 });
+
+// Update notification badge with low-stock count
+async function updateNotifBadge() {
+    const badgeEl = document.getElementById('notifBadge');
+    if (!badgeEl) return;
+    const products = await DB.getProducts();
+    const lowCount = products.filter(p => (p.currentStock ?? p.stock ?? 0) <= p.minStock).length;
+    if (lowCount > 0) {
+        badgeEl.textContent = lowCount;
+        badgeEl.style.display = 'flex';
+    } else {
+        badgeEl.style.display = 'none';
+    }
+}

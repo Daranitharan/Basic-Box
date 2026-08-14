@@ -62,9 +62,9 @@
                     </div>
 
                     <div class="form-group auth-field-group">
-                        <label>Phone Number</label>
+                        <label>Phone Number *</label>
                         <i class="fas fa-phone auth-field-icon"></i>
-                        <input type="tel" id="phone" placeholder="Enter phone number">
+                        <input type="tel" id="phone" placeholder="Enter phone number" required>
                     </div>
 
                     <div class="form-group auth-field-group">
@@ -103,20 +103,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('registerForm');
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                const name = document.getElementById('name').value.trim();
+                const name     = document.getElementById('name').value.trim();
                 const shopName = document.getElementById('shopName').value.trim();
-                const email = document.getElementById('email').value.trim();
+                const email    = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
-                const phone = document.getElementById('phone').value.trim();
-                const address = document.getElementById('address').value.trim();
-                const gstin = document.getElementById('gstin').value.trim();
+                const phone    = document.getElementById('phone').value.trim();
+                const address  = document.getElementById('address').value.trim();
+                const gstin    = document.getElementById('gstin').value.trim();
 
-                if (!name || !shopName || !email || !password || !confirmPassword) {
-                    showToast('Please fill in all mandatory fields.', 'error');
+                if (!name || !shopName || !email || !password || !confirmPassword || !phone) {
+                    showToast('Please fill in all mandatory fields (including Phone Number).', 'error');
                     return;
                 }
 
@@ -125,14 +125,20 @@
                     return;
                 }
 
-                const profile = {
-                    shopName,
-                    phone,
-                    address,
-                    gstin
-                };
+                if (password.length < 6) {
+                    showToast('Password must be at least 6 characters.', 'error');
+                    return;
+                }
 
-                const result = registerUser(name, email, password, profile);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+
+                const result = await registerUser(name, email, password, { shopName, phone, address, gstin });
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Register';
+
                 if (!result.ok) {
                     showToast(result.error, 'error');
                     return;

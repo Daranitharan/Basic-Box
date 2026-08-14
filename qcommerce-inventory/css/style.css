@@ -1807,3 +1807,122 @@ body.auth-page {
         transition: none !important;
     }
 }
+
+/* ========== NOTIFICATION BELL ========== */
+.notif-btn {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg-solid);
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notif-btn:hover {
+    border-color: var(--accent-ring);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--body-bg);
+    line-height: 1;
+}
+
+/* ========== LOGOUT CONFIRMATION MODAL ========== */
+.logout-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.logout-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.logout-dialog {
+    background: var(--card-bg-solid);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 24px 60px -12px rgba(0,0,0,0.4);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.logout-overlay.active .logout-dialog {
+    transform: scale(1) translateY(0);
+}
+
+.logout-dialog-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(239,68,68,0.12);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.6rem;
+    color: var(--danger);
+}
+
+.logout-dialog h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.logout-dialog p {
+    font-size: 0.9rem;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.logout-dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.logout-dialog-actions .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 20px;
+}

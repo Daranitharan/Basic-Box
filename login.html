@@ -67,10 +67,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('loginForm');
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                const email = document.getElementById('email').value.trim();
+                const email    = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
                 if (!email || !password) {
@@ -78,7 +78,14 @@
                     return;
                 }
 
-                const result = loginUser(email, password);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+                const result = await loginUser(email, password);
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
 
                 if (result.ok) {
                     showToast('Welcome back, ' + result.user.name + '!', 'success');

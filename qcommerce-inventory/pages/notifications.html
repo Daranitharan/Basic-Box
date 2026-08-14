@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Basics Box</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .notif-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .notif-tabs {
+            display: flex;
+            gap: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .notif-tab {
+            padding: 8px 18px;
+            border-radius: 7px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            transition: all 0.18s ease;
+        }
+
+        .notif-tab.active {
+            background: var(--accent-grad);
+            color: #fff;
+            box-shadow: 0 4px 12px -4px var(--accent-ring);
+        }
+
+        .notif-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notif-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 18px;
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .notif-item:hover {
+            border-color: var(--accent-ring);
+            transform: translateX(3px);
+        }
+
+        .notif-item.unread {
+            border-left: 3px solid var(--accent);
+            background: var(--accent-soft);
+        }
+
+        [data-theme="dark"] .notif-item.unread {
+            background: rgba(255,122,0,0.06);
+        }
+
+        .notif-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .notif-icon.danger  { background: var(--danger-soft);  color: var(--danger);  }
+        .notif-icon.warning { background: rgba(217,119,6,0.12); color: var(--warning); }
+        .notif-icon.success { background: var(--success-soft); color: var(--success); }
+        .notif-icon.info    { background: var(--accent-soft);  color: var(--accent);  }
+
+        .notif-body { flex: 1; min-width: 0; }
+
+        .notif-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .notif-desc {
+            font-size: 0.83rem;
+            color: var(--text-faint);
+            line-height: 1.5;
+        }
+
+        .notif-time {
+            font-size: 0.75rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+
+        .notif-unread-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+
+        .notif-clear-btn {
+            font-size: 0.85rem;
+        }
+
+        .empty-notif {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-faint);
+        }
+
+        .empty-notif i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+            color: var(--card-border);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div>
+                <h2>Basics Box</h2>
+                <p>Inventory System</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="../merchant.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="nav-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="stock.html" class="nav-item">
+                <i class="fas fa-boxes"></i>
+                <span>Stock</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <header class="top-header">
+            <div class="page-heading">
+                <h1 class="page-title">Notifications</h1>
+                <p class="page-subtitle">Stock alerts and activity updates</p>
+            </div>
+            <div class="header-right">
+                <button class="notif-btn" id="notifBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn btn-secondary logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Notifications Card -->
+        <section class="card">
+            <div class="card-header">
+                <div class="notif-tabs">
+                    <button class="notif-tab active" data-tab="all">All</button>
+                    <button class="notif-tab" data-tab="stock">Stock Alerts</button>
+                    <button class="notif-tab" data-tab="sales">Sales</button>
+                    <button class="notif-tab" data-tab="purchases">Purchases</button>
+                </div>
+                <button class="btn btn-secondary notif-clear-btn" id="clearNotifsBtn">
+                    <i class="fas fa-check-double"></i> Mark all read
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="notif-list" id="notifList">
+                    <div class="empty-notif">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/db.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+    const NOTIF_READ_KEY = 'bb-notifs-read';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        let currentTab = 'all';
+        const tabs = document.querySelectorAll('.notif-tab');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                renderNotifs(currentTab);
+            });
+        });
+
+        document.getElementById('clearNotifsBtn').addEventListener('click', () => {
+            const readSet = buildReadSet();
+            getAllNotifs().forEach(n => readSet.add(n.id));
+            localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...readSet]));
+            renderNotifs(currentTab);
+            updateBadge();
+            showToast('All notifications marked as read.', 'success');
+        });
+
+        await renderNotifs(currentTab);
+        updateBadge();
+    });
+
+    function buildReadSet() {
+        const raw = localStorage.getItem(NOTIF_READ_KEY);
+        return new Set(raw ? JSON.parse(raw) : []);
+    }
+
+    // Build notifications from live data
+    async function getAllNotifs() {
+        const products  = await DB.getProducts();
+        const sales     = await DB.getSales();
+        const purchases = await DB.getPurchases();
+        const notifs = [];
+
+        // Low stock alerts
+        products.forEach(p => {
+            const stock = p.currentStock ?? p.stock ?? 0;
+            if (stock === 0) {
+                notifs.push({
+                    id: `stock-out-${p.id}`,
+                    type: 'stock',
+                    icon: 'fa-box-open',
+                    iconClass: 'danger',
+                    title: `Out of Stock: ${p.name}`,
+                    desc: `SKU ${p.sku} has 0 ${p.unit} remaining. Restock immediately.`,
+                    time: new Date().toISOString()
+                });
+            } else if (stock <= p.minStock) {
+                notifs.push({
+                    id: `stock-low-${p.id}`,
+                    type: 'stock',
+                    icon: 'fa-exclamation-triangle',
+                    iconClass: 'warning',
+                    title: `Low Stock: ${p.name}`,
+                    desc: `Only ${stock} ${p.unit} left. Minimum is ${p.minStock} ${p.unit}.`,
+                    time: new Date().toISOString()
+                });
+            }
+        });
+
+        // Recent sales (last 10)
+        sales.slice(0, 10).forEach(s => {
+            const profit = s.profit || 0;
+            notifs.push({
+                id: `sale-${s.id}`,
+                type: 'sales',
+                icon: 'fa-shopping-cart',
+                iconClass: profit >= 0 ? 'success' : 'danger',
+                title: `Sale: ${s.productName}`,
+                desc: `Qty ${s.quantity} × ₹${Number(s.sellingPrice).toFixed(2)} = ₹${Number(s.totalAmount).toFixed(2)} | ${profit >= 0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}`,
+                time: s.date
+            });
+        });
+
+        // Recent purchases (last 10)
+        purchases.slice(0, 10).forEach(p => {
+            notifs.push({
+                id: `purchase-${p.id}`,
+                type: 'purchases',
+                icon: 'fa-truck',
+                iconClass: 'info',
+                title: `Purchase: ${p.productName}`,
+                desc: `Qty ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}${p.supplier ? ` | Supplier: ${p.supplier}` : ''}`,
+                time: p.date
+            });
+        });
+
+        // Sort newest first
+        notifs.sort((a, b) => new Date(b.time) - new Date(a.time));
+        return notifs;
+    }
+
+    async function renderNotifs(tab) {
+        const listEl = document.getElementById('notifList');
+        listEl.innerHTML = '<div class="empty-notif"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div>';
+
+        const allNotifs = await getAllNotifs();
+        const readSet = buildReadSet();
+
+        const filtered = tab === 'all' ? allNotifs : allNotifs.filter(n => n.type === tab);
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `
+                <div class="empty-notif">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications in this category.</p>
+                </div>`;
+            return;
+        }
+
+        listEl.innerHTML = '';
+        filtered.forEach(n => {
+            const isRead = readSet.has(n.id);
+            const timeStr = isNaN(new Date(n.time)) ? '' : new Date(n.time).toLocaleString('en-IN');
+            const div = document.createElement('div');
+            div.className = `notif-item${isRead ? '' : ' unread'}`;
+            div.innerHTML = `
+                <div class="notif-icon ${n.iconClass}">
+                    <i class="fas ${n.icon}"></i>
+                </div>
+                <div class="notif-body">
+                    <div class="notif-title">${n.title}</div>
+                    <div class="notif-desc">${n.desc}</div>
+                    <div class="notif-time">${timeStr}</div>
+                </div>
+                ${!isRead ? '<div class="notif-unread-dot"></div>' : ''}
+            `;
+            // Click to mark as read
+            div.addEventListener('click', () => {
+                readSet.add(n.id);
+                localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...readSet]));
+                div.classList.remove('unread');
+                div.querySelector('.notif-unread-dot')?.remove();
+                updateBadge();
+            });
+            listEl.appendChild(div);
+        });
+    }
+
+    async function updateBadge() {
+        const badgeEl = document.getElementById('notifBadge');
+        if (!badgeEl) return;
+        const allNotifs = await getAllNotifs();
+        const readSet = buildReadSet();
+        const unread = allNotifs.filter(n => !readSet.has(n.id)).length;
+        if (unread > 0) {
+            badgeEl.textContent = unread;
+            badgeEl.style.display = 'flex';
+        } else {
+            badgeEl.style.display = 'none';
+        }
+    }
+    </script>
+</body>
+</html>
