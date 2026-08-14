@@ -6,29 +6,35 @@
     <title>Notifications | Basics Box</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../js/theme.js"></script>
     <style>
-        .notif-page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 12px;
+        /* ── Two-column layout ── */
+        .notif-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
         }
 
+        @media (max-width: 900px) {
+            .notif-two-col { grid-template-columns: 1fr; }
+        }
+
+        /* ── Tabs ── */
         .notif-tabs {
             display: flex;
-            gap: 8px;
-            background: var(--card-bg);
+            gap: 6px;
+            background: var(--input-bg);
             border: 1px solid var(--card-border);
             border-radius: 10px;
             padding: 4px;
+            flex-wrap: wrap;
         }
 
         .notif-tab {
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 7px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 500;
             font-family: 'Inter', sans-serif;
             color: var(--text-muted);
@@ -36,6 +42,7 @@
             border: none;
             background: transparent;
             transition: all 0.18s ease;
+            white-space: nowrap;
         }
 
         .notif-tab.active {
@@ -44,100 +51,215 @@
             box-shadow: 0 4px 12px -4px var(--accent-ring);
         }
 
+        /* ── Notification items ── */
         .notif-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
+            max-height: 560px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-soft, #ff7a00) transparent;
         }
+
+        [data-theme="dark"] .notif-list {
+            scrollbar-color: #ff7a00 #111118;
+        }
+
+        [data-theme="dark"] .notif-list::-webkit-scrollbar-track { background: #111118; border-radius: 10px; }
+        [data-theme="dark"] .notif-list::-webkit-scrollbar-thumb { background: #ff7a00; border-radius: 10px; }
+
+        .notif-list::-webkit-scrollbar { width: 6px; }
+        .notif-list::-webkit-scrollbar-track { background: transparent; }
+        .notif-list::-webkit-scrollbar-thumb { background: var(--accent-soft); border-radius: 10px; }
 
         .notif-item {
             display: flex;
             align-items: flex-start;
-            gap: 14px;
-            padding: 16px 18px;
+            gap: 12px;
+            padding: 14px 16px;
             background: var(--card-bg-solid);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
+            border-radius: 12px;
             transition: all 0.2s ease;
+            cursor: pointer;
             position: relative;
         }
 
-        .notif-item:hover {
-            border-color: var(--accent-ring);
-            transform: translateX(3px);
-        }
+        .notif-item:hover { border-color: var(--accent-ring); transform: translateX(3px); }
 
         .notif-item.unread {
             border-left: 3px solid var(--accent);
-            background: var(--accent-soft);
         }
 
-        [data-theme="dark"] .notif-item.unread {
-            background: rgba(255,122,0,0.06);
-        }
+        [data-theme="dark"] .notif-item.unread { background: rgba(255,122,0,0.06); }
+        [data-theme="light"] .notif-item.unread { background: rgba(255,122,0,0.04); }
 
         .notif-icon {
-            width: 42px;
-            height: 42px;
-            min-width: 42px;
+            width: 38px; height: 38px; min-width: 38px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
         }
 
-        .notif-icon.danger  { background: var(--danger-soft);  color: var(--danger);  }
-        .notif-icon.warning { background: rgba(217,119,6,0.12); color: var(--warning); }
-        .notif-icon.success { background: var(--success-soft); color: var(--success); }
-        .notif-icon.info    { background: var(--accent-soft);  color: var(--accent);  }
+        .notif-icon.danger  { background: var(--danger-soft);         color: var(--danger);  }
+        .notif-icon.warning { background: rgba(217,119,6,0.12);        color: var(--warning); }
+        .notif-icon.success { background: var(--success-soft);         color: var(--success); }
+        .notif-icon.info    { background: var(--accent-soft);          color: var(--accent);  }
 
         .notif-body { flex: 1; min-width: 0; }
+        .notif-title { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 3px; }
+        .notif-desc  { font-size: 0.8rem; color: var(--text-faint); line-height: 1.5; }
+        .notif-time  { font-size: 0.72rem; color: var(--text-faint); margin-top: 3px; }
 
-        .notif-title {
+        .notif-unread-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        /* ── Email section ── */
+        .email-compose-btn {
+            width: 100%;
+            margin-bottom: 14px;
+            justify-content: center;
+        }
+
+        .email-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-soft, #ff7a00) transparent;
+        }
+
+        [data-theme="dark"] .email-list { scrollbar-color: #ff7a00 #111118; }
+        [data-theme="dark"] .email-list::-webkit-scrollbar-track { background: #111118; border-radius: 10px; }
+        [data-theme="dark"] .email-list::-webkit-scrollbar-thumb { background: #ff7a00; border-radius: 10px; }
+        .email-list::-webkit-scrollbar { width: 6px; }
+        .email-list::-webkit-scrollbar-track { background: transparent; }
+        .email-list::-webkit-scrollbar-thumb { background: var(--accent-soft); border-radius: 10px; }
+
+        .email-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .email-item:hover { border-color: var(--accent-ring); background: var(--accent-soft); }
+
+        .email-item.unread { border-left: 3px solid var(--accent); font-weight: 600; }
+
+        .email-avatar {
+            width: 36px; height: 36px; min-width: 36px;
+            border-radius: 50%;
+            background: var(--accent-grad);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .email-meta { flex: 1; min-width: 0; }
+
+        .email-from {
+            font-size: 0.88rem;
             font-weight: 600;
-            font-size: 0.95rem;
             color: var(--text);
-            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
         }
 
-        .notif-desc {
-            font-size: 0.83rem;
-            color: var(--text-faint);
-            line-height: 1.5;
-        }
-
-        .notif-time {
-            font-size: 0.75rem;
-            color: var(--text-faint);
+        .email-subject {
+            font-size: 0.82rem;
+            color: var(--text-muted);
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             margin-top: 2px;
         }
 
-        .notif-unread-dot {
-            width: 8px;
-            height: 8px;
+        .email-time {
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+        }
+
+        .email-unread-dot {
+            width: 8px; height: 8px;
             background: var(--accent);
             border-radius: 50%;
             flex-shrink: 0;
             margin-top: 6px;
         }
 
-        .notif-clear-btn {
-            font-size: 0.85rem;
+        /* ── Compose modal ── */
+        .compose-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 8000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: all 0.2s ease;
         }
+
+        .compose-overlay.active { opacity: 1; visibility: visible; }
+
+        .compose-dialog {
+            background: var(--card-bg-solid);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 28px 24px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 24px 60px -12px rgba(0,0,0,0.4);
+            transform: scale(0.92) translateY(20px);
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .compose-overlay.active .compose-dialog { transform: scale(1) translateY(0); }
+
+        .compose-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .compose-header h3 { font-size: 1rem; font-weight: 700; }
+
+        .compose-close {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: transparent; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-faint); font-size: 1rem;
+            transition: all 0.15s ease;
+        }
+
+        .compose-close:hover { background: var(--danger-soft); color: var(--danger); }
 
         .empty-notif {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-faint);
+            text-align: center; padding: 48px 20px; color: var(--text-faint);
         }
 
-        .empty-notif i {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-            display: block;
-            color: var(--card-border);
+        .empty-notif i { font-size: 2.2rem; margin-bottom: 10px; display: block; color: var(--card-border); }
+        .empty-notif p { font-size: 0.9rem; }
+
+        .card-header-actions {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
         }
     </style>
 </head>
@@ -147,28 +269,14 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="brand-chip">BB</div>
-            <div>
-                <h2>Basics Box</h2>
-                <p>Inventory System</p>
-            </div>
+            <div><h2>Basics Box</h2><p>Inventory System</p></div>
         </div>
         <nav class="sidebar-nav">
-            <a href="../merchant.html" class="nav-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="products.html" class="nav-item">
-                <i class="fas fa-box"></i>
-                <span>Products</span>
-            </a>
-            <a href="stock.html" class="nav-item">
-                <i class="fas fa-boxes"></i>
-                <span>Stock</span>
-            </a>
-            <a href="reports.html" class="nav-item">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span>Reports</span>
-            </a>
+            <a href="../merchant.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a href="products.html" class="nav-item"><i class="fas fa-box"></i><span>Products</span></a>
+            <a href="stock.html" class="nav-item"><i class="fas fa-boxes"></i><span>Stock</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-file-invoice-dollar"></i><span>Reports</span></a>
+            <a href="notifications.html" class="nav-item"><i class="fas fa-bell"></i><span>Notifications</span></a>
         </nav>
     </aside>
 
@@ -177,8 +285,8 @@
 
         <header class="top-header">
             <div class="page-heading">
-                <h1 class="page-title">Notifications</h1>
-                <p class="page-subtitle">Stock alerts and activity updates</p>
+                <h1 class="page-title">Notifications & Mail</h1>
+                <p class="page-subtitle">Stock alerts, activity updates and messages</p>
             </div>
             <div class="header-right">
                 <button class="notif-btn" id="notifBtn" aria-label="Notifications">
@@ -194,29 +302,86 @@
             </div>
         </header>
 
-        <!-- Notifications Card -->
-        <section class="card">
-            <div class="card-header">
-                <div class="notif-tabs">
-                    <button class="notif-tab active" data-tab="all">All</button>
-                    <button class="notif-tab" data-tab="stock">Stock Alerts</button>
-                    <button class="notif-tab" data-tab="sales">Sales</button>
-                    <button class="notif-tab" data-tab="purchases">Purchases</button>
-                </div>
-                <button class="btn btn-secondary notif-clear-btn" id="clearNotifsBtn">
-                    <i class="fas fa-check-double"></i> Mark all read
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="notif-list" id="notifList">
-                    <div class="empty-notif">
-                        <i class="fas fa-bell-slash"></i>
-                        <p>Loading notifications...</p>
+        <!-- Two-column layout -->
+        <div class="notif-two-col">
+
+            <!-- ── LEFT: Notifications ── -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="notif-tabs">
+                        <button class="notif-tab active" data-tab="all">All</button>
+                        <button class="notif-tab" data-tab="stock">Stock Alerts</button>
+                        <button class="notif-tab" data-tab="transactions">Recent Transactions</button>
+                    </div>
+                    <div class="card-header-actions">
+                        <button class="btn btn-secondary" id="clearNotifsBtn" style="font-size:0.82rem; padding:8px 14px;">
+                            <i class="fas fa-check-double"></i> Mark all read
+                        </button>
                     </div>
                 </div>
-            </div>
-        </section>
+                <div class="card-body">
+                    <div class="notif-list" id="notifList">
+                        <div class="empty-notif">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading notifications...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
+            <!-- ── RIGHT: Email ── -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="notif-tabs">
+                        <button class="notif-tab active" data-email-tab="all">All</button>
+                        <button class="notif-tab" data-email-tab="inbox">Inbox</button>
+                        <button class="notif-tab" data-email-tab="sent">Sent</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary email-compose-btn" id="composeBtn">
+                        <i class="fas fa-pen"></i> Compose
+                    </button>
+                    <div class="email-list" id="emailList">
+                        <div class="empty-notif">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading emails...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Compose Email Modal -->
+    <div class="compose-overlay" id="composeOverlay">
+        <div class="compose-dialog">
+            <div class="compose-header">
+                <h3><i class="fas fa-pen" style="color:var(--accent);margin-right:8px;"></i>Compose Email</h3>
+                <button class="compose-close" id="composeClose">&times;</button>
+            </div>
+            <form id="composeForm">
+                <div class="form-group">
+                    <label>To *</label>
+                    <input type="email" id="emailTo" placeholder="recipient@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject *</label>
+                    <input type="text" id="emailSubject" placeholder="Subject" required>
+                </div>
+                <div class="form-group">
+                    <label>Message *</label>
+                    <textarea id="emailBody" rows="5" placeholder="Write your message..." required></textarea>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:6px;">
+                    <button type="button" class="btn btn-secondary" id="composeCancelBtn" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="../js/storage.js"></script>
@@ -224,52 +389,129 @@
     <script src="../js/config.js"></script>
     <script src="../js/db.js"></script>
     <script src="../js/toast.js"></script>
-    <script src="../js/theme.js"></script>
     <script src="../js/auth.js"></script>
     <script>
+    // ── Keys ──────────────────────────────────────────────────
     const NOTIF_READ_KEY = 'bb-notifs-read';
+    const EMAIL_KEY      = 'bb-emails';
+
+    // ── State ─────────────────────────────────────────────────
+    let currentNotifTab  = 'all';
+    let currentEmailTab  = 'all';
 
     document.addEventListener('DOMContentLoaded', async () => {
-        let currentTab = 'all';
-        const tabs = document.querySelectorAll('.notif-tab');
 
-        tabs.forEach(tab => {
+        // ── Notification tabs ──────────────────────────────────
+        document.querySelectorAll('.notif-tab[data-tab]').forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.notif-tab[data-tab]').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                currentTab = tab.dataset.tab;
-                renderNotifs(currentTab);
+                currentNotifTab = tab.dataset.tab;
+                renderNotifs();
             });
         });
 
-        document.getElementById('clearNotifsBtn').addEventListener('click', () => {
-            const readSet = buildReadSet();
-            getAllNotifs().forEach(n => readSet.add(n.id));
-            localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...readSet]));
-            renderNotifs(currentTab);
+        // ── Mark-all-read (fixed: await getAllNotifs) ──────────
+        document.getElementById('clearNotifsBtn').addEventListener('click', async () => {
+            const allNotifs = await getAllNotifs();
+            const readSet   = buildReadSet();
+            allNotifs.forEach(n => readSet.add(n.id));
+            saveReadSet(readSet);
+            await renderNotifs();
             updateBadge();
             showToast('All notifications marked as read.', 'success');
         });
 
-        await renderNotifs(currentTab);
+        // ── Email tabs ─────────────────────────────────────────
+        document.querySelectorAll('.notif-tab[data-email-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.notif-tab[data-email-tab]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentEmailTab = tab.dataset.emailTab;
+                renderEmails();
+            });
+        });
+
+        // ── Compose modal ──────────────────────────────────────
+        document.getElementById('composeBtn').addEventListener('click', () => {
+            document.getElementById('composeOverlay').classList.add('active');
+        });
+
+        ['composeClose','composeCancelBtn'].forEach(id => {
+            document.getElementById(id).addEventListener('click', () => {
+                document.getElementById('composeOverlay').classList.remove('active');
+            });
+        });
+
+        document.getElementById('composeOverlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+        });
+
+        document.getElementById('composeForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const user    = getCurrentUser();
+            const to      = document.getElementById('emailTo').value.trim();
+            const subject = document.getElementById('emailSubject').value.trim();
+            const body    = document.getElementById('emailBody').value.trim();
+
+            const email = {
+                id:      Date.now().toString(),
+                from:    user?.email || 'me',
+                fromName: user?.name || 'Me',
+                to,
+                subject,
+                body,
+                date:    new Date().toISOString(),
+                folder:  'sent'
+            };
+
+            const emails = Storage.get(EMAIL_KEY) || [];
+            emails.unshift(email);
+            Storage.set(EMAIL_KEY, emails);
+
+            document.getElementById('composeForm').reset();
+            document.getElementById('composeOverlay').classList.remove('active');
+            showToast('Email sent!', 'success');
+            renderEmails();
+        });
+
+        // ── Initial render ─────────────────────────────────────
+        await renderNotifs();
+        renderEmails();
         updateBadge();
     });
 
+    // ── Helpers ───────────────────────────────────────────────
     function buildReadSet() {
         const raw = localStorage.getItem(NOTIF_READ_KEY);
         return new Set(raw ? JSON.parse(raw) : []);
     }
 
-    // Build notifications from live data
+    function saveReadSet(set) {
+        localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...set]));
+    }
+
+    function isToday(dateStr) {
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        const n = new Date();
+        return d.getDate() === n.getDate() &&
+               d.getMonth() === n.getMonth() &&
+               d.getFullYear() === n.getFullYear();
+    }
+
+    // ── Build notifications from live data ────────────────────
     async function getAllNotifs() {
         const products  = await DB.getProducts();
         const sales     = await DB.getSales();
         const purchases = await DB.getPurchases();
-        const notifs = [];
+        const notifs    = [];
 
-        // Low stock alerts
+        // Stock alerts (always current — no date filter)
         products.forEach(p => {
             const stock = p.currentStock ?? p.stock ?? 0;
+            const min   = p.minStock ?? 0;
+            if (min === 0) return; // skip products with no minimum set
             if (stock === 0) {
                 notifs.push({
                     id: `stock-out-${p.id}`,
@@ -277,77 +519,78 @@
                     icon: 'fa-box-open',
                     iconClass: 'danger',
                     title: `Out of Stock: ${p.name}`,
-                    desc: `SKU ${p.sku} has 0 ${p.unit} remaining. Restock immediately.`,
-                    time: new Date().toISOString()
+                    desc:  `SKU ${p.sku} has 0 ${p.unit} remaining. Restock immediately.`,
+                    time:  new Date().toISOString()
                 });
-            } else if (stock <= p.minStock) {
+            } else if (stock <= min) {
                 notifs.push({
                     id: `stock-low-${p.id}`,
                     type: 'stock',
                     icon: 'fa-exclamation-triangle',
                     iconClass: 'warning',
                     title: `Low Stock: ${p.name}`,
-                    desc: `Only ${stock} ${p.unit} left. Minimum is ${p.minStock} ${p.unit}.`,
-                    time: new Date().toISOString()
+                    desc:  `Only ${stock} ${p.unit} left. Minimum is ${min} ${p.unit}.`,
+                    time:  new Date().toISOString()
                 });
             }
         });
 
-        // Recent sales (last 10)
-        sales.slice(0, 10).forEach(s => {
+        // TODAY's transactions only
+        sales.filter(s => isToday(s.date)).forEach(s => {
             const profit = s.profit || 0;
             notifs.push({
                 id: `sale-${s.id}`,
-                type: 'sales',
+                type: 'transactions',
                 icon: 'fa-shopping-cart',
                 iconClass: profit >= 0 ? 'success' : 'danger',
-                title: `Sale: ${s.productName}`,
-                desc: `Qty ${s.quantity} × ₹${Number(s.sellingPrice).toFixed(2)} = ₹${Number(s.totalAmount).toFixed(2)} | ${profit >= 0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}`,
-                time: s.date
+                title: `Sold: ${s.productName}`,
+                desc:  `Qty ${s.quantity} × ₹${Number(s.sellingPrice).toFixed(2)} = ₹${Number(s.totalAmount).toFixed(2)} | ${profit >= 0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}`,
+                time:  s.date
             });
         });
 
-        // Recent purchases (last 10)
-        purchases.slice(0, 10).forEach(p => {
+        purchases.filter(p => isToday(p.date)).forEach(p => {
             notifs.push({
                 id: `purchase-${p.id}`,
-                type: 'purchases',
+                type: 'transactions',
                 icon: 'fa-truck',
                 iconClass: 'info',
-                title: `Purchase: ${p.productName}`,
-                desc: `Qty ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}${p.supplier ? ` | Supplier: ${p.supplier}` : ''}`,
-                time: p.date
+                title: `Bought: ${p.productName}`,
+                desc:  `Qty ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}${p.supplier ? ` | Supplier: ${p.supplier}` : ''}`,
+                time:  p.date
             });
         });
 
-        // Sort newest first
         notifs.sort((a, b) => new Date(b.time) - new Date(a.time));
         return notifs;
     }
 
-    async function renderNotifs(tab) {
-        const listEl = document.getElementById('notifList');
+    // ── Render notification list ──────────────────────────────
+    async function renderNotifs() {
+        const listEl   = document.getElementById('notifList');
         listEl.innerHTML = '<div class="empty-notif"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div>';
 
         const allNotifs = await getAllNotifs();
-        const readSet = buildReadSet();
+        const readSet   = buildReadSet();
 
-        const filtered = tab === 'all' ? allNotifs : allNotifs.filter(n => n.type === tab);
+        const filtered = currentNotifTab === 'all'
+            ? allNotifs
+            : allNotifs.filter(n => n.type === currentNotifTab);
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `
-                <div class="empty-notif">
-                    <i class="fas fa-bell-slash"></i>
-                    <p>No notifications in this category.</p>
-                </div>`;
+            listEl.innerHTML = `<div class="empty-notif"><i class="fas fa-bell-slash"></i><p>${
+                currentNotifTab === 'transactions'
+                    ? 'No transactions today yet.'
+                    : 'No notifications in this category.'
+            }</p></div>`;
             return;
         }
 
         listEl.innerHTML = '';
         filtered.forEach(n => {
-            const isRead = readSet.has(n.id);
+            const isRead  = readSet.has(n.id);
             const timeStr = isNaN(new Date(n.time)) ? '' : new Date(n.time).toLocaleString('en-IN');
-            const div = document.createElement('div');
+            const div     = document.createElement('div');
             div.className = `notif-item${isRead ? '' : ' unread'}`;
             div.innerHTML = `
                 <div class="notif-icon ${n.iconClass}">
@@ -360,10 +603,9 @@
                 </div>
                 ${!isRead ? '<div class="notif-unread-dot"></div>' : ''}
             `;
-            // Click to mark as read
             div.addEventListener('click', () => {
                 readSet.add(n.id);
-                localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...readSet]));
+                saveReadSet(readSet);
                 div.classList.remove('unread');
                 div.querySelector('.notif-unread-dot')?.remove();
                 updateBadge();
@@ -372,12 +614,72 @@
         });
     }
 
+    // ── Render email list ─────────────────────────────────────
+    function renderEmails() {
+        const listEl = document.getElementById('emailList');
+        const emails = Storage.get(EMAIL_KEY) || [];
+        const user   = getCurrentUser();
+        const myEmail = user?.email || '';
+
+        let filtered = emails;
+        if (currentEmailTab === 'inbox') {
+            filtered = emails.filter(e => e.folder === 'inbox' || e.to === myEmail);
+        } else if (currentEmailTab === 'sent') {
+            filtered = emails.filter(e => e.folder === 'sent' || e.from === myEmail);
+        }
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div class="empty-notif"><i class="fas fa-envelope-open"></i><p>No emails here yet.</p></div>`;
+            return;
+        }
+
+        const emailReadKey = 'bb-emails-read';
+        const readRaw = localStorage.getItem(emailReadKey);
+        const readSet = new Set(readRaw ? JSON.parse(readRaw) : []);
+
+        listEl.innerHTML = '';
+        filtered.forEach(email => {
+            const isRead = readSet.has(email.id);
+            const isSent = email.folder === 'sent' || email.from === myEmail;
+            const initials = (isSent ? email.to : email.fromName || email.from)
+                .substring(0, 2).toUpperCase();
+            const displayName = isSent ? `To: ${email.to}` : (email.fromName || email.from);
+            const timeStr = new Date(email.date).toLocaleString('en-IN', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            const div = document.createElement('div');
+            div.className = `email-item${isRead ? '' : ' unread'}`;
+            div.innerHTML = `
+                <div class="email-avatar">${initials}</div>
+                <div class="email-meta">
+                    <div class="email-from">
+                        <span>${displayName}</span>
+                        <span class="email-time">${timeStr}</span>
+                    </div>
+                    <div class="email-subject">${email.subject}</div>
+                </div>
+                ${!isRead ? '<div class="email-unread-dot"></div>' : ''}
+            `;
+            div.addEventListener('click', () => {
+                readSet.add(email.id);
+                localStorage.setItem(emailReadKey, JSON.stringify([...readSet]));
+                div.classList.remove('unread');
+                div.querySelector('.email-unread-dot')?.remove();
+                // Show email body in toast for now
+                showToast(`${email.subject}: ${email.body.substring(0, 80)}${email.body.length > 80 ? '…' : ''}`, 'info');
+            });
+            listEl.appendChild(div);
+        });
+    }
+
+    // ── Update badge count ────────────────────────────────────
     async function updateBadge() {
         const badgeEl = document.getElementById('notifBadge');
         if (!badgeEl) return;
         const allNotifs = await getAllNotifs();
-        const readSet = buildReadSet();
-        const unread = allNotifs.filter(n => !readSet.has(n.id)).length;
+        const readSet   = buildReadSet();
+        const unread    = allNotifs.filter(n => !readSet.has(n.id)).length;
         if (unread > 0) {
             badgeEl.textContent = unread;
             badgeEl.style.display = 'flex';

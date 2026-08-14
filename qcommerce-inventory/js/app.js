@@ -82,16 +82,22 @@ async function updateDashboard() {
     updateLowStockAlerts(products);
     updateGreeting();
 
-    // 9. Recent Transactions
+    // 9. Recent Transactions (Today Only)
     const recentDiv = document.getElementById('recent-transactions');
+    const today = new Date().toDateString();
+    
+    // Filter transactions to today only
+    const todayPurchases = purchases.filter(p => new Date(p.date).toDateString() === today);
+    const todaySales = sales.filter(s => new Date(s.date).toDateString() === today);
+    
     const allTransactions = [
-        ...purchases.map(p => ({ ...p, type: 'purchase' })),
-        ...sales.map(s => ({ ...s, type: 'sale' }))
+        ...todayPurchases.map(p => ({ ...p, type: 'purchase' })),
+        ...todaySales.map(s => ({ ...s, type: 'sale' }))
     ];
     allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     if (allTransactions.length === 0) {
-        if (recentDiv) recentDiv.innerHTML = `<p class="empty-text">No transactions yet.</p>`;
+        if (recentDiv) recentDiv.innerHTML = `<p class="empty-text">No transactions today.</p>`;
         return;
     }
 

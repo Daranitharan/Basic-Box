@@ -1,42 +1,34 @@
 // theme.js - Light/Dark theme toggle with localStorage persistence
 
-// Apply saved theme (or system preference) on load
-function initTheme() {
-    const saved = localStorage.getItem('qcommerce-theme');
-    let theme = saved;
+// ── Apply theme IMMEDIATELY (no DOMContentLoaded wait) ──────
+// This runs as soon as the script loads, preventing flash of wrong theme.
+(function() {
+    const saved = localStorage.getItem('qcommerce-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+})();
 
-    if (!theme) {
-        theme = 'light';
-    }
-
-    document.documentElement.setAttribute('data-theme', theme);
-    updateToggleIcon(theme);
-}
-
-// Update the toggle button icon
 function updateToggleIcon(theme) {
-    const toggle = document.querySelector('.theme-toggle');
-    if (!toggle) return;
-    toggle.innerHTML = theme === 'dark'
-        ? '<i class="fas fa-sun"></i>'
-        : '<i class="fas fa-moon"></i>';
+    document.querySelectorAll('.theme-toggle').forEach(toggle => {
+        toggle.innerHTML = theme === 'dark'
+            ? '<i class="fas fa-sun"></i>'
+            : '<i class="fas fa-moon"></i>';
+    });
 }
 
-// Toggle between light and dark
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
-
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('qcommerce-theme', next);
     updateToggleIcon(next);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
+    // Sync icon with current theme
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    updateToggleIcon(theme);
 
-    const toggle = document.querySelector('.theme-toggle');
-    if (toggle) {
+    document.querySelectorAll('.theme-toggle').forEach(toggle => {
         toggle.addEventListener('click', toggleTheme);
-    }
+    });
 });

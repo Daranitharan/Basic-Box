@@ -48,6 +48,22 @@ async function registerUser(name, email, password) {
     };
     users.push(user);
     saveUsers(users);
+
+    // Seed a welcome email into the new user's inbox
+    // (runs after setting user so Storage._prefix() uses the new user's id)
+    localStorage.setItem('qcommerce-user', JSON.stringify(user));
+    const welcomeEmail = [{
+        id: 'welcome-' + user.id,
+        from: 'support@basicsbox.app',
+        fromName: 'Basics Box Support',
+        to: email,
+        subject: 'Welcome to Basics Box!',
+        body: `Hi ${name},\n\nWelcome to Basics Box – your inventory & profit tracker.\n\nGet started by adding your products, then record your buys and sells.\n\nHappy selling!\n– The Basics Box Team`,
+        date: new Date().toISOString(),
+        folder: 'inbox'
+    }];
+    Storage.set('bb-emails', welcomeEmail);
+
     return { ok: true, user };
 }
 
@@ -62,6 +78,8 @@ async function loginUser(email, password) {
 
         const name = data.user.user_metadata?.name || email.split('@')[0];
         const user = { id: data.user.id, name, email };
+        // Clear old cached data before setting new user session
+        localStorage.removeItem('qcommerce-user');
         localStorage.setItem(AUTH_KEY, JSON.stringify(user));
         return { ok: true, user };
     }
@@ -74,6 +92,7 @@ async function loginUser(email, password) {
     );
     if (!user) return { ok: false, error: 'Invalid email or password.' };
 
+    // Set new user session — storage.js will now namespace all keys to this user
     localStorage.setItem(AUTH_KEY, JSON.stringify(user));
     return { ok: true, user };
 }
@@ -191,16 +210,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Update notification badge with low-stock count
+// Update notification badge with unread count (only real low-stock alerts)
 async function updateNotifBadge() {
     const badgeEl = document.getElementById('notifBadge');
     if (!badgeEl) return;
-    const products = await DB.getProducts();
-    const lowCount = products.filter(p => (p.currentStock ?? p.stock ?? 0) <= p.minStock).length;
-    if (lowCount > 0) {
-        badgeEl.textContent = lowCount;
-        badgeEl.style.display = 'flex';
-    } else {
+
+    try {
+        const products = await DB.getProducts();
+        // Only count products where minStock > 0 AND stock is at/below min
+        const lowCount = products.filter(p => {
+            const stock = p.currentStock ?? p.stock ?? 0;
+            const min = p.minStock ?? 0;
+            return min > 0 && stock <= min;
+        }).length;
+
+        // Check how many are unread
+        const readRaw = localStorage.getItem('bb-notifs-read');
+        const readSet = new Set(readRaw ? JSON.parse(readRaw) : []);
+
+        // Count unread low-stock items
+        let unreadCount = 0;
+        products.forEach(p => {
+            const stock = p.currentStock ?? p.stock ?? 0;
+            const min = p.minStock ?? 0;
+            if (min > 0 && stock <= min) {
+                const id = stock === 0 ? `stock-out-${p.id}` : `stock-low-${p.id}`;
+                if (!readSet.has(id)) unreadCount++;
+            }
+        });
+
+        if (unreadCount > 0) {
+            badgeEl.textContent = unreadCount;
+            badgeEl.style.display = 'flex';
+        } else {
+            badgeEl.style.display = 'none';
+        }
+    } catch(e) {
         badgeEl.style.display = 'none';
     }
 }
