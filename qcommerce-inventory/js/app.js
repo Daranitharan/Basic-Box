@@ -1,8 +1,7 @@
-// app.js — Dashboard Logic
+// app.js — Dashboard Logic (manual refresh only)
 
-let refreshInterval = null;
-let isRefreshing    = false;
-let salesChartInstance = null; // Chart.js instance
+let isRefreshing       = false;
+let salesChartInstance = null;
 
 // ── Boot ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Refresh button
+    // Manual refresh button
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
@@ -26,32 +25,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Re-render chart immediately when theme toggles (fixes invisible chart bug)
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            // Let CSS variables update first (theme.js fires synchronously, so 80ms is enough)
+            setTimeout(async () => {
+                if (salesChartInstance) {
+                    salesChartInstance.destroy();
+                    salesChartInstance = null;
+                }
+                if (!isRefreshing) await updateDashboard(true);
+            }, 80);
+        });
+    }
+
     await updateDashboard(false);
     setupDashboardSearch();
-    startAutoRefresh();
 });
 
-// ── Auto-refresh ──────────────────────────────────────────────
-function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        if (!isRefreshing && document.visibilityState === 'visible') {
-            updateDashboard(true);
-        }
-    }, 15000); // every 15 s
-}
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        if (!refreshInterval) startAutoRefresh();
-        if (!isRefreshing) updateDashboard(true);
-    } else {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-    }
-});
-
-// ── Exported trigger for other pages ─────────────────────────
+// ── Exported trigger for other pages (buy/sell/products) ─────
 window.triggerDashboardRefresh = function () {
     if (!isRefreshing) updateDashboard(true);
 };
@@ -72,7 +65,7 @@ function animateValue(el, end, isCurrency, isInteger) {
     requestAnimationFrame(tick);
 }
 
-// ── Main update function ──────────────────────────────────────
+// ── Main update ───────────────────────────────────────────────
 async function updateDashboard(silent) {
     if (isRefreshing) return;
     isRefreshing = true;
@@ -84,11 +77,10 @@ async function updateDashboard(silent) {
 
         const todayStr = new Date().toDateString();
 
-        // ── Stats ───────────────────────────────────────────
         // 1. Total Products
         animateValue(document.getElementById('total-products'), products.length, false, true);
 
-        // 2. Stock Value (based on latest purchase price per product)
+        // 2. Stock Value (latest purchase price × current stock)
         let stockValue = 0;
         products.forEach(prod => {
             const latestBuy = purchases
@@ -99,7 +91,7 @@ async function updateDashboard(silent) {
         });
         animateValue(document.getElementById('stock-value'), stockValue, true, false);
 
-        // 3. Total Sales amount
+        // 3. Total Sales
         const totalSales = sales.reduce((s, x) => s + (x.totalAmount || 0), 0);
         animateValue(document.getElementById('total-sales'), totalSales, true, false);
 
@@ -126,7 +118,7 @@ async function updateDashboard(silent) {
         // 9. Sales chart
         renderSalesChart(sales);
 
-        // 10. Low stock + recent transactions (below chart)
+        // 10. Low stock & transactions
         updateLowStockAlerts(products);
         renderRecentTransactions(purchases, sales, todayStr);
 
@@ -148,34 +140,33 @@ function renderSalesChart(sales) {
     const canvas = document.getElementById('salesChart');
     if (!canvas) return;
 
-    // Month selector
     const monthSel = document.getElementById('chartMonthSelect');
     const now      = new Date();
     const selYear  = monthSel ? parseInt(monthSel.dataset.year  || now.getFullYear()) : now.getFullYear();
-    const selMonth = monthSel ? parseInt(monthSel.dataset.month || now.getMonth())    : now.getMonth();
+    const selMonth = monthSel ? parseInt(monthSel.dataset.month ?? now.getMonth())    : now.getMonth();
 
-    // Days in selected month
     const daysInMonth = new Date(selYear, selMonth + 1, 0).getDate();
     const labels      = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-    // Aggregate daily sales for selected month
     const dailySales  = new Array(daysInMonth).fill(0);
     const dailyProfit = new Array(daysInMonth).fill(0);
 
     sales.forEach(s => {
         const d = new Date(s.date);
         if (d.getFullYear() === selYear && d.getMonth() === selMonth) {
-            const day = d.getDate() - 1; // 0-indexed
+            const day = d.getDate() - 1;
             dailySales[day]  += s.totalAmount || 0;
             dailyProfit[day] += s.profit      || 0;
         }
     });
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-    const tickColor  = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
-    const tooltipBg  = isDark ? '#1a1a2e' : '#fff';
-    const tooltipFg  = isDark ? '#f0f0f0' : '#111';
+    // Read CSS variables AFTER theme has been applied
+    const root      = document.documentElement;
+    const isDark    = root.getAttribute('data-theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+    const tickColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)';
+    const tooltipBg = isDark ? '#1a1a2e'                : '#ffffff';
+    const tooltipFg = isDark ? '#f0f0f0'                : '#111111';
+    const salesFill = isDark ? 'rgba(255,122,0,0.14)'   : 'rgba(255,122,0,0.08)';
 
     const chartData = {
         labels,
@@ -184,17 +175,15 @@ function renderSalesChart(sales) {
                 label: 'Sales (₹)',
                 data: dailySales,
                 borderColor: '#ff7a00',
-                backgroundColor: isDark
-                    ? 'rgba(255,122,0,0.13)'
-                    : 'rgba(255,122,0,0.08)',
+                backgroundColor: salesFill,
                 borderWidth: 2.5,
-                pointRadius: dailySales.map(v => v > 0 ? 4 : 0),
+                pointRadius: dailySales.map(v => v > 0 ? 4 : 2),
                 pointHoverRadius: 6,
                 pointBackgroundColor: '#ff7a00',
-                pointBorderColor: isDark ? '#1a1a2e' : '#fff',
+                pointBorderColor: isDark ? '#12121a' : '#ffffff',
                 pointBorderWidth: 2,
                 fill: true,
-                tension: 0.42,
+                tension: 0.4,
             },
             {
                 label: 'Profit (₹)',
@@ -205,83 +194,80 @@ function renderSalesChart(sales) {
                 pointRadius: dailyProfit.map(v => v !== 0 ? 3 : 0),
                 pointHoverRadius: 5,
                 pointBackgroundColor: '#22c55e',
-                pointBorderColor: isDark ? '#1a1a2e' : '#fff',
+                pointBorderColor: isDark ? '#12121a' : '#ffffff',
                 pointBorderWidth: 2,
                 fill: true,
-                tension: 0.42,
-                borderDash: [],
+                tension: 0.4,
             }
         ]
     };
 
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                    color: tickColor,
+                    boxWidth: 10,
+                    boxHeight: 10,
+                    borderRadius: 5,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: { size: 12, family: 'Inter, sans-serif' }
+                }
+            },
+            tooltip: {
+                backgroundColor: tooltipBg,
+                titleColor: tooltipFg,
+                bodyColor: tooltipFg,
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 10,
+                callbacks: {
+                    title: ctx => `Day ${ctx[0].label}`,
+                    label: ctx => ` ${ctx.dataset.label}: ₹${Number(ctx.parsed.y).toFixed(2)}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: gridColor, drawTicks: false },
+                ticks: {
+                    color: tickColor,
+                    font: { size: 11, family: 'Inter, sans-serif' },
+                    maxTicksLimit: 16,
+                    maxRotation: 0
+                },
+                border: { display: false }
+            },
+            y: {
+                grid: { color: gridColor, drawTicks: false },
+                ticks: {
+                    color: tickColor,
+                    font: { size: 11, family: 'Inter, sans-serif' },
+                    callback: v => '₹' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v)
+                },
+                border: { display: false }
+            }
+        }
+    };
+
+    // Always destroy first — guarantees correct colors after theme switch
     if (salesChartInstance) {
-        // Update existing chart instead of destroying & recreating
-        salesChartInstance.data = chartData;
-        salesChartInstance.options.scales.x.ticks.color = tickColor;
-        salesChartInstance.options.scales.y.ticks.color = tickColor;
-        salesChartInstance.options.scales.x.grid.color  = gridColor;
-        salesChartInstance.options.scales.y.grid.color  = gridColor;
-        salesChartInstance.update('active');
-        return;
+        salesChartInstance.destroy();
+        salesChartInstance = null;
     }
 
     salesChartInstance = new Chart(canvas, {
         type: 'line',
         data: chartData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    align: 'end',
-                    labels: {
-                        color: tickColor,
-                        boxWidth: 12,
-                        boxHeight: 12,
-                        borderRadius: 4,
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        font: { size: 12, family: 'Inter, sans-serif' }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: tooltipBg,
-                    titleColor: tooltipFg,
-                    bodyColor: tooltipFg,
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-                    borderWidth: 1,
-                    padding: 12,
-                    cornerRadius: 10,
-                    callbacks: {
-                        title: ctx => `Day ${ctx[0].label}`,
-                        label: ctx => ` ${ctx.dataset.label}: ₹${Number(ctx.parsed.y).toFixed(2)}`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { color: gridColor, drawTicks: false },
-                    ticks: {
-                        color: tickColor,
-                        font: { size: 11, family: 'Inter, sans-serif' },
-                        maxTicksLimit: 15,
-                        maxRotation: 0
-                    },
-                    border: { display: false }
-                },
-                y: {
-                    grid: { color: gridColor, drawTicks: false },
-                    ticks: {
-                        color: tickColor,
-                        font: { size: 11, family: 'Inter, sans-serif' },
-                        callback: v => '₹' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v)
-                    },
-                    border: { display: false }
-                }
-            }
-        }
+        options: chartOptions
     });
 }
 
@@ -291,7 +277,6 @@ function updateLowStockAlerts(products) {
     const countEl = document.getElementById('lowStockCount');
     if (!listEl || !countEl) return;
 
-    // Only flag products where minStock is set AND stock is at/below it
     const lowStock = products.filter(p => {
         const stock = p.currentStock ?? p.stock ?? 0;
         const min   = p.minStock ?? 0;
@@ -385,8 +370,7 @@ function setupDashboardSearch() {
         lowStockSearch.addEventListener('input', e => {
             const term = e.target.value.toLowerCase();
             document.querySelectorAll('#lowStockList li').forEach(li => {
-                const t = li.textContent.toLowerCase();
-                li.style.display = t.includes(term) ? '' : 'none';
+                li.style.display = li.textContent.toLowerCase().includes(term) ? '' : 'none';
             });
         });
     }

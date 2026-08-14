@@ -1926,3 +1926,40 @@ body.auth-page {
     justify-content: center;
     padding: 12px 20px;
 }
+
+/* ========== BACK NAVIGATION BUTTON ========== */
+.page-back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.page-back-btn:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent-ring);
+    color: var(--accent);
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px -4px var(--accent-ring);
+}
+
+/* Slot in page-heading row next to title */
+.page-heading-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-heading-row .page-heading {
+    flex: 1;
+}
