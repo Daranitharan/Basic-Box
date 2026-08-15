@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders | Basics Box</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../js/theme.js"></script>
+    <style>
+        .orders-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .orders-search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 340px;
+        }
+
+        .orders-search-wrap i {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-faint);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .orders-search {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        .orders-search:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .orders-search::placeholder { color: var(--text-faint); }
+
+        .filter-select {
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        /* Order status badges */
+        .order-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .order-status.new       { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .order-status.preparing { background: rgba(217,119,6,0.12);   color: var(--warning); }
+        .order-status.ready     { background: rgba(139,92,246,0.12);  color: #8b5cf6; }
+        .order-status.delivery  { background: rgba(14,165,233,0.12);  color: #0ea5e9; }
+        .order-status.completed { background: var(--success-soft);    color: var(--success); }
+        .order-status.cancelled { background: var(--danger-soft);     color: var(--danger); }
+
+        .order-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Add order modal */
+        .order-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .order-item-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+        }
+
+        .order-item-name { font-size: 0.88rem; font-weight: 500; }
+        .order-item-qty  { font-size: 0.82rem; color: var(--text-faint); }
+        .order-item-price{ font-size: 0.88rem; font-weight: 600; }
+        .order-item-del  { 
+            width: 26px; height: 26px; border-radius: 6px;
+            border: none; background: var(--danger-soft); color: var(--danger);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; transition: all 0.15s ease;
+        }
+        .order-item-del:hover { background: var(--danger); color: white; }
+
+        .add-item-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 8px;
+            align-items: end;
+            margin-bottom: 12px;
+        }
+
+        .add-item-row .form-group { margin-bottom: 0; }
+
+        .order-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .order-summary-row:last-child { border-bottom: none; }
+        .order-summary-row.total { font-weight: 700; font-size: 1rem; }
+
+        /* Timeline */
+        .status-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+
+        .timeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        .timeline-step:last-child { padding-bottom: 0; }
+
+        .timeline-dot {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            border: 2px solid var(--card-border);
+            background: var(--card-bg-solid);
+            color: var(--text-faint);
+            transition: all 0.2s ease;
+            z-index: 1;
+        }
+
+        .timeline-dot.done {
+            background: var(--success-soft);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .timeline-dot.current {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: var(--accent);
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-soft); }
+            50%       { box-shadow: 0 0 0 6px transparent; }
+        }
+
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            bottom: 0;
+            width: 2px;
+            background: var(--card-border);
+        }
+
+        .timeline-step:last-child::before { display: none; }
+
+        .timeline-step.done::before {
+            background: var(--success);
+        }
+
+        .timeline-content { flex: 1; padding-top: 6px; }
+        .timeline-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+        .timeline-time  { font-size: 0.75rem; color: var(--text-faint); }
+
+        /* Order detail panel */
+        .order-detail-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .order-detail-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .order-detail-panel {
+            width: 480px;
+            max-width: 95vw;
+            height: 100vh;
+            background: var(--card-bg-solid);
+            border-left: 1px solid var(--card-border);
+            overflow-y: auto;
+            padding: 28px 24px;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+
+        [data-theme="dark"] .order-detail-panel { background: #0f0f18; }
+
+        .order-detail-overlay.active .order-detail-panel {
+            transform: translateX(0);
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .detail-close {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: transparent; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-faint); font-size: 1rem;
+            transition: all 0.15s ease;
+        }
+
+        .detail-close:hover { background: var(--danger-soft); color: var(--danger); }
+
+        .detail-section {
+            margin-bottom: 22px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .detail-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .detail-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-faint);
+            margin-bottom: 12px;
+        }
+
+        .detail-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .detail-item-row:last-child { border-bottom: none; }
+
+        .action-btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .action-btn-row .btn {
+            flex: 1;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        /* Empty state */
+        .orders-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-faint);
+        }
+
+        .orders-empty i {
+            font-size: 3rem;
+            margin-bottom: 14px;
+            display: block;
+            opacity: 0.3;
+        }
+
+        .orders-empty h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .orders-empty p {
+            font-size: 0.88rem;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .order-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div><h2>Basics Box</h2><p>Inventory System</p></div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="../merchant.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a href="orders.html" class="nav-item active"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
+            <a href="products.html" class="nav-item"><i class="fas fa-box"></i><span>Products</span></a>
+            <a href="inventory.html" class="nav-item"><i class="fas fa-warehouse"></i><span>Inventory</span></a>
+            <a href="customers.html" class="nav-item"><i class="fas fa-users"></i><span>Customers</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
+            <a href="notifications.html" class="nav-item"><i class="fas fa-bell"></i><span>Notifications</span></a>
+            <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="top-header">
+            <div class="page-heading-row">
+                <a href="../merchant.html" class="page-back-btn" title="Back to Dashboard">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="page-heading">
+                    <h1 class="page-title">Orders</h1>
+                    <p class="page-subtitle">Manage and track all customer orders</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-primary" id="newOrderBtn">
+                    <i class="fas fa-plus"></i> New Order
+                </button>
+                <button class="notif-btn" id="notifBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+                <button class="btn btn-secondary logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </header>
+
+        <!-- Status Overview Cards -->
+        <section class="stats-grid" style="margin-bottom: 20px;" id="orderStatsGrid">
+            <div class="stat-card" data-filter="all" style="cursor:pointer;">
+                <div class="stat-icon blue"><i class="fas fa-list-ul"></i></div>
+                <div class="stat-info"><h4>All Orders</h4><p id="stat-all">0</p></div>
+            </div>
+            <div class="stat-card" data-filter="new" style="cursor:pointer;">
+                <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6;"><i class="fas fa-inbox"></i></div>
+                <div class="stat-info"><h4>New</h4><p id="stat-new">0</p></div>
+            </div>
+            <div class="stat-card" data-filter="preparing" style="cursor:pointer;">
+                <div class="stat-icon" style="background:rgba(217,119,6,0.15);color:#d97706;"><i class="fas fa-fire"></i></div>
+                <div class="stat-info"><h4>Preparing</h4><p id="stat-preparing">0</p></div>
+            </div>
+            <div class="stat-card" data-filter="completed" style="cursor:pointer;">
+                <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info"><h4>Completed</h4><p id="stat-completed">0</p></div>
+            </div>
+        </section>
+
+        <!-- Filters + Orders Table -->
+        <section class="card">
+            <div class="card-header">
+                <h3>Order List</h3>
+                <div class="orders-filters" style="margin-bottom:0;">
+                    <div class="orders-search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="ordersSearch" class="orders-search" placeholder="Search orders, customers...">
+                    </div>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="new">New</option>
+                        <option value="preparing">Preparing</option>
+                        <option value="ready">Ready</option>
+                        <option value="delivery">Out for Delivery</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <input type="date" class="filter-select" id="dateFilter" style="font-size:0.85rem;">
+                </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div id="ordersTableWrap">
+                    <!-- Orders rendered here -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- New Order Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="orderModalTitle">New Order</h3>
+                <button class="modal-close" id="closeOrderModal">&times;</button>
+            </div>
+            <form id="orderForm" style="padding: 22px; overflow-y: auto; max-height: calc(90vh - 70px);">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Customer Name *</label>
+                        <input type="text" id="orderCustomer" placeholder="e.g. Rahul Sharma" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="orderPhone" placeholder="e.g. 9876543210">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Delivery Address</label>
+                    <textarea id="orderAddress" rows="2" placeholder="Delivery address..."></textarea>
+                </div>
+
+                <!-- Order Items -->
+                <div class="form-group">
+                    <label style="margin-bottom: 10px; display:block;">Order Items *</label>
+
+                    <div class="add-item-row">
+                        <div class="form-group">
+                            <label style="font-size:0.75rem;">Product</label>
+                            <select id="itemProduct" style="width:100%; padding:10px 12px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:10px; font-family:'Inter',sans-serif; color:var(--text); font-size:0.88rem;">
+                                <option value="">Select product...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="width:80px;">
+                            <label style="font-size:0.75rem;">Qty</label>
+                            <input type="number" id="itemQty" min="1" value="1" style="width:100%; padding:10px 12px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:10px; font-family:'Inter',sans-serif; color:var(--text); font-size:0.88rem;">
+                        </div>
+                        <div class="form-group" style="width:100px;">
+                            <label style="font-size:0.75rem;">Price (₹)</label>
+                            <input type="number" id="itemPrice" min="0" step="0.01" placeholder="0.00" style="width:100%; padding:10px 12px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:10px; font-family:'Inter',sans-serif; color:var(--text); font-size:0.88rem;">
+                        </div>
+                        <div class="form-group" style="padding-top: 22px;">
+                            <button type="button" class="btn btn-secondary" id="addItemBtn" style="height:42px; white-space:nowrap;">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="order-items-list" id="orderItemsList">
+                        <p style="text-align:center; color:var(--text-faint); font-size:0.85rem; padding: 16px 0;">No items added yet.</p>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div style="background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+                    <div class="order-summary-row"><span>Subtotal</span><span id="summarySubtotal">₹0.00</span></div>
+                    <div class="order-summary-row"><span>Delivery Fee</span>
+                        <input type="number" id="deliveryFee" min="0" value="0" step="0.01"
+                               style="width:90px; padding:4px 8px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:7px; font-family:'Inter',sans-serif; color:var(--text); font-size:0.88rem; text-align:right;"
+                               oninput="updateOrderSummary()">
+                    </div>
+                    <div class="order-summary-row total"><span>Total</span><span id="summaryTotal" style="color:var(--accent);">₹0.00</span></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select id="orderPayment">
+                            <option value="cash">Cash</option>
+                            <option value="upi">UPI</option>
+                            <option value="card">Card</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Status</label>
+                        <select id="orderPaymentStatus">
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="orderNotes" rows="2" placeholder="Special instructions..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelOrderBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Place Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Panel -->
+    <div class="order-detail-overlay" id="orderDetailOverlay">
+        <div class="order-detail-panel" id="orderDetailPanel">
+            <div class="detail-header">
+                <div>
+                    <h3 id="detailOrderId" style="font-family:'Space Grotesk',sans-serif; font-size:1.1rem; font-weight:700;">Order #—</h3>
+                    <span id="detailOrderStatus" class="order-status new" style="margin-top:6px; display:inline-flex;">New</span>
+                </div>
+                <button class="detail-close" id="closeDetailPanel">&times;</button>
+            </div>
+            <div id="detailPanelContent"><!-- injected by JS --></div>
+        </div>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/db.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/orders.js"></script>
+</body>
+</html>

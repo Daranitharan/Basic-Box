@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers | Basics Box</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../js/theme.js"></script>
+    <style>
+        .cust-avatar {
+            width: 38px; height: 38px; min-width: 38px;
+            border-radius: 50%;
+            background: var(--accent-grad);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.88rem;
+            box-shadow: 0 4px 10px -3px var(--accent-ring);
+        }
+
+        .cust-search-wrap { position:relative; flex:1; min-width:200px; max-width:340px; }
+        .cust-search-wrap i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-faint); font-size:0.85rem; pointer-events:none; }
+        .cust-search { width:100%; padding:10px 14px 10px 38px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:10px; font-size:0.9rem; font-family:'Inter',sans-serif; color:var(--text); }
+        .cust-search:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+        .cust-search::placeholder { color:var(--text-faint); }
+
+        .cust-empty { text-align:center; padding:60px 20px; color:var(--text-faint); }
+        .cust-empty i { font-size:2.8rem; margin-bottom:14px; display:block; opacity:0.3; }
+
+        .cust-order-row { padding:10px 0; border-bottom:1px solid var(--card-border); font-size:0.87rem; display:flex; justify-content:space-between; align-items:center; }
+        .cust-order-row:last-child { border-bottom:none; }
+
+        /* Side panel */
+        .cust-panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(5px); z-index:2000; display:flex; align-items:flex-start; justify-content:flex-end; opacity:0; visibility:hidden; transition:all 0.25s; }
+        .cust-panel-overlay.active { opacity:1; visibility:visible; }
+        .cust-panel { width:420px; max-width:95vw; height:100vh; background:var(--card-bg-solid); border-left:1px solid var(--card-border); overflow-y:auto; padding:28px 24px; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+        [data-theme="dark"] .cust-panel { background:#0f0f18; }
+        .cust-panel-overlay.active .cust-panel { transform:translateX(0); }
+        .cust-panel-close { width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:1rem;transition:all 0.15s; }
+        .cust-panel-close:hover { background:var(--danger-soft); color:var(--danger); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-chip">BB</div>
+            <div><h2>Basics Box</h2><p>Inventory System</p></div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="../merchant.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+            <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
+            <a href="products.html" class="nav-item"><i class="fas fa-box"></i><span>Products</span></a>
+            <a href="inventory.html" class="nav-item"><i class="fas fa-warehouse"></i><span>Inventory</span></a>
+            <a href="customers.html" class="nav-item active"><i class="fas fa-users"></i><span>Customers</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
+            <a href="notifications.html" class="nav-item"><i class="fas fa-bell"></i><span>Notifications</span></a>
+            <a href="settings.html" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="top-header">
+            <div class="page-heading-row">
+                <a href="../merchant.html" class="page-back-btn" title="Back"><i class="fas fa-arrow-left"></i></a>
+                <div class="page-heading">
+                    <h1 class="page-title">Customers</h1>
+                    <p class="page-subtitle">Customer profiles built from orders and sales</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="notif-btn" id="notifBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+                <button class="btn btn-secondary logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <section class="stats-grid" style="margin-bottom:20px;">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                <div class="stat-info"><h4>Total Customers</h4><p id="cust-total">0</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-rupee-sign"></i></div>
+                <div class="stat-info"><h4>Total Revenue</h4><p id="cust-revenue">₹0.00</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fas fa-shopping-bag"></i></div>
+                <div class="stat-info"><h4>Total Orders</h4><p id="cust-orders">0</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-star"></i></div>
+                <div class="stat-info"><h4>Avg Order Value</h4><p id="cust-avg">₹0.00</p></div>
+            </div>
+        </section>
+
+        <!-- Table -->
+        <section class="card">
+            <div class="card-header">
+                <h3>Customer List</h3>
+                <div class="cust-search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="custSearch" class="cust-search" placeholder="Search by name or phone...">
+                </div>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div id="custTableWrap"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Customer detail panel -->
+    <div class="cust-panel-overlay" id="custPanelOverlay">
+        <div class="cust-panel" id="custPanel">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+                <div>
+                    <h3 id="custPanelName" style="font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:700;"></h3>
+                    <p id="custPanelPhone" style="font-size:0.85rem;color:var(--text-faint);margin-top:4px;"></p>
+                </div>
+                <button class="cust-panel-close" id="closeCustPanel">&times;</button>
+            </div>
+            <div id="custPanelContent"></div>
+        </div>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/db.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+    // customers.js (inline — simple enough)
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadCustomers();
+
+        document.getElementById('custSearch')?.addEventListener('input', () => renderTable(buildCustomerProfiles()));
+        document.getElementById('closeCustPanel')?.addEventListener('click', () => {
+            document.getElementById('custPanelOverlay').classList.remove('active');
+        });
+        document.getElementById('custPanelOverlay')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+        });
+    });
+
+    async function loadCustomers() {
+        const [sales, orders] = await Promise.all([
+            DB.getSales(),
+            Promise.resolve(Storage.get('bb-orders') || [])
+        ]);
+
+        const profiles = buildCustomerProfiles(sales, orders);
+        renderStats(profiles, sales, orders);
+        renderTable(profiles);
+    }
+
+    function buildCustomerProfiles(sales, orders) {
+        if (!sales) sales = Storage.get('sales') || [];
+        if (!orders) orders = Storage.get('bb-orders') || [];
+
+        const map = {};
+
+        // From sales (sell.js flow)
+        sales.forEach(s => {
+            if (!s.customer) return;
+            const key = s.customer.toLowerCase().trim();
+            if (!map[key]) map[key] = { name: s.customer, phone: '', totalSpent: 0, orderCount: 0, lastOrder: null, saleIds: [], orderIds: [] };
+            map[key].totalSpent += s.totalAmount || 0;
+            map[key].orderCount++;
+            map[key].saleIds.push(s.id);
+            if (!map[key].lastOrder || new Date(s.date) > new Date(map[key].lastOrder)) map[key].lastOrder = s.date;
+        });
+
+        // From orders (orders.js flow)
+        orders.forEach(o => {
+            if (!o.customer) return;
+            const key = o.customer.toLowerCase().trim();
+            if (!map[key]) map[key] = { name: o.customer, phone: o.phone || '', totalSpent: 0, orderCount: 0, lastOrder: null, saleIds: [], orderIds: [] };
+            map[key].totalSpent += o.total || 0;
+            map[key].orderCount++;
+            map[key].orderIds.push(o.id);
+            if (o.phone && !map[key].phone) map[key].phone = o.phone;
+            if (!map[key].lastOrder || new Date(o.date) > new Date(map[key].lastOrder)) map[key].lastOrder = o.date;
+        });
+
+        return Object.values(map).sort((a, b) => b.totalSpent - a.totalSpent);
+    }
+
+    function renderStats(profiles) {
+        const total   = profiles.length;
+        const revenue = profiles.reduce((s, c) => s + c.totalSpent, 0);
+        const orders  = profiles.reduce((s, c) => s + c.orderCount, 0);
+        const avg     = orders > 0 ? revenue / orders : 0;
+
+        animVal('cust-total', total, false);
+        document.getElementById('cust-revenue').textContent = '₹' + revenue.toFixed(2);
+        animVal('cust-orders', orders, false);
+        document.getElementById('cust-avg').textContent = '₹' + avg.toFixed(2);
+    }
+
+    function animVal(id, target) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dur = 500; const start = performance.now();
+        function tick(now) {
+            const p = Math.min((now - start) / dur, 1);
+            el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    function renderTable(profiles) {
+        const wrap   = document.getElementById('custTableWrap');
+        const search = document.getElementById('custSearch')?.value.toLowerCase() || '';
+        let list = profiles;
+        if (search) list = profiles.filter(c => c.name.toLowerCase().includes(search) || c.phone.includes(search));
+
+        if (list.length === 0) {
+            wrap.innerHTML = `<div class="cust-empty"><i class="fas fa-users"></i><p>No customers found.<br>Customers appear automatically when you record sales or orders with a customer name.</p></div>`;
+            return;
+        }
+
+        const rows = list.map(c => {
+            const initials = c.name.substring(0, 2).toUpperCase();
+            const lastTime = c.lastOrder ? new Date(c.lastOrder).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—';
+            const avgSpend = c.orderCount > 0 ? (c.totalSpent / c.orderCount).toFixed(2) : '0.00';
+            return `<tr style="cursor:pointer;" onclick="openCustomer(${JSON.stringify(c).split('"').join("'")})">
+                <td><div style="display:flex;align-items:center;gap:12px;"><div class="cust-avatar">${initials}</div><div><div style="font-weight:600;">${c.name}</div><div style="font-size:0.75rem;color:var(--text-faint);">${c.phone || 'No phone'}</div></div></div></td>
+                <td>${c.orderCount}</td>
+                <td><strong>₹${c.totalSpent.toFixed(2)}</strong></td>
+                <td>₹${avgSpend}</td>
+                <td style="color:var(--text-faint);font-size:0.82rem;">${lastTime}</td>
+            </tr>`;
+        }).join('');
+
+        wrap.innerHTML = `<div class="table-responsive"><table class="data-table"><thead><tr><th>Customer</th><th>Orders</th><th>Total Spent</th><th>Avg Order</th><th>Last Order</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+
+    window.openCustomer = function(c) {
+        document.getElementById('custPanelName').textContent = c.name;
+        document.getElementById('custPanelPhone').textContent = c.phone ? '📞 ' + c.phone : 'No phone recorded';
+
+        const avgSpend = c.orderCount > 0 ? (c.totalSpent / c.orderCount).toFixed(2) : '0.00';
+        const lastTime = c.lastOrder ? new Date(c.lastOrder).toLocaleString('en-IN') : '—';
+
+        document.getElementById('custPanelContent').innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div style="background:var(--input-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);margin-bottom:6px;">Total Orders</div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;">${c.orderCount}</div>
+                </div>
+                <div style="background:var(--input-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px;text-align:center;">
+                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);margin-bottom:6px;">Total Spent</div>
+                    <div style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:var(--accent);">₹${c.totalSpent.toFixed(0)}</div>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:0.88rem;border-bottom:1px solid var(--card-border);">
+                <span style="color:var(--text-faint);">Average Order Value</span>
+                <strong>₹${avgSpend}</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:0.88rem;">
+                <span style="color:var(--text-faint);">Last Ordered</span>
+                <span>${lastTime}</span>
+            </div>`;
+
+        document.getElementById('custPanelOverlay').classList.add('active');
+    };
+    </script>
+</body>
+</html>

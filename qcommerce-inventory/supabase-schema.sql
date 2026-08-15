@@ -117,3 +117,52 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================
+--  ADDITIVE MIGRATION v2 — Orders + Adjustments
+--  Safe to run after the original schema.
+--  Existing tables (users, products, purchases, sales) are
+--  NOT touched — this only adds new tables.
+-- ============================================================
+
+-- ── Orders ───────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.orders (
+    id              TEXT PRIMARY KEY,
+    user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    order_id_label  TEXT NOT NULL,          -- e.g. #1001
+    customer        TEXT,
+    phone           TEXT,
+    address         TEXT,
+    items           JSONB NOT NULL DEFAULT '[]',
+    subtotal        NUMERIC(12,2) DEFAULT 0,
+    delivery_fee    NUMERIC(12,2) DEFAULT 0,
+    total           NUMERIC(12,2) DEFAULT 0,
+    payment         TEXT DEFAULT 'cash',
+    payment_status  TEXT DEFAULT 'pending',
+    status          TEXT DEFAULT 'new',     -- new|preparing|ready|delivery|completed|cancelled
+    timeline        JSONB DEFAULT '[]',
+    notes           TEXT,
+    date            TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "orders_own" ON public.orders FOR ALL USING (auth.uid() = user_id);
+
+-- ── Stock Adjustments ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.stock_adjustments (
+    id           TEXT PRIMARY KEY,
+    user_id      UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    product_id   TEXT REFERENCES public.products(id) ON DELETE SET NULL,
+    product_name TEXT NOT NULL,
+    sku          TEXT,
+    before_qty   INTEGER NOT NULL,
+    after_qty    INTEGER NOT NULL,
+    change_qty   INTEGER NOT NULL,
+    adj_type     TEXT NOT NULL,     -- add|remove|set
+    reason       TEXT NOT NULL,
+    notes        TEXT,
+    date         TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "adjustments_own" ON public.stock_adjustments FOR ALL USING (auth.uid() = user_id);
