@@ -126,10 +126,11 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================
 
 -- ── Orders ───────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS public.orders (
     id              TEXT PRIMARY KEY,
     user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    order_id_label  TEXT NOT NULL,          -- e.g. #1001
+    order_id_label  TEXT NOT NULL,
     customer        TEXT,
     phone           TEXT,
     address         TEXT,
@@ -139,14 +140,16 @@ CREATE TABLE IF NOT EXISTS public.orders (
     total           NUMERIC(12,2) DEFAULT 0,
     payment         TEXT DEFAULT 'cash',
     payment_status  TEXT DEFAULT 'pending',
-    status          TEXT DEFAULT 'new',     -- new|preparing|ready|delivery|completed|cancelled
+    status          TEXT DEFAULT 'new',
     timeline        JSONB DEFAULT '[]',
     notes           TEXT,
     date            TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "orders_own" ON public.orders FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "orders_own" ON public.orders;
+CREATE POLICY "orders_own" ON public.orders FOR ALL USING (auth.uid() = user_id);
+
 
 -- ── Stock Adjustments ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.stock_adjustments (
@@ -158,11 +161,12 @@ CREATE TABLE IF NOT EXISTS public.stock_adjustments (
     before_qty   INTEGER NOT NULL,
     after_qty    INTEGER NOT NULL,
     change_qty   INTEGER NOT NULL,
-    adj_type     TEXT NOT NULL,     -- add|remove|set
+    adj_type     TEXT NOT NULL,
     reason       TEXT NOT NULL,
     notes        TEXT,
     date         TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "adjustments_own" ON public.stock_adjustments FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "adjustments_own" ON public.stock_adjustments;
+CREATE POLICY "adjustments_own" ON public.stock_adjustments FOR ALL USING (auth.uid() = user_id);
