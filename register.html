@@ -144,6 +144,29 @@
                     return;
                 }
 
+                // If Supabase email confirmation is pending, show the confirmation UI
+                if (result.user.pendingConfirmation) {
+                    form.style.display = 'none';
+                    const card = document.querySelector('.auth-form-card');
+                    const confirmMsg = document.createElement('div');
+                    confirmMsg.style.cssText = 'text-align:center; padding:30px 10px;';
+                    confirmMsg.innerHTML = `
+                        <div style="width:64px;height:64px;margin:0 auto 20px;border-radius:50%;background:var(--success-soft);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-envelope-open-text" style="font-size:1.8rem;color:var(--success);"></i>
+                        </div>
+                        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:10px;">Check your email</h3>
+                        <p style="color:var(--text-faint);margin-bottom:8px;">We've sent a confirmation link to</p>
+                        <p style="font-weight:700;margin-bottom:20px;">${email}</p>
+                        <p style="font-size:0.85rem;color:var(--text-faint);margin-bottom:24px;">Click the link in your email to activate your account, then login below.</p>
+                        <a href="login.html" class="btn btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;justify-content:center;width:100%;max-width:260px;">
+                            <i class="fas fa-sign-in-alt"></i> Go to Login
+                        </a>
+                    `;
+                    card.appendChild(confirmMsg);
+                    return;
+                }
+
+                // localStorage mode — user is logged in immediately
                 localStorage.setItem('qcommerce-user', JSON.stringify(result.user));
                 showToast('Registration successful! Redirecting...', 'success');
                 setTimeout(() => window.location.href = 'qcommerce-inventory/merchant.html', 800);

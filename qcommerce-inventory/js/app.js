@@ -73,14 +73,28 @@ async function updateDashboard(silent) {
     try {
         const products  = await DB.getProducts();
         const purchases = await DB.getPurchases();
-        const sales     = await DB.getSales();
+
+        // Sales data now comes exclusively from completed orders
+        const orders    = Storage.get('bb-orders') || [];
+        const sales     = typeof window.getCompletedOrderSales === 'function'
+            ? window.getCompletedOrderSales()
+            : orders.filter(o => o.status === 'completed').flatMap(o =>
+                (o.items || []).map(item => ({
+                    totalAmount:  (item.price || 0) * (item.qty || 0),
+                    profit:       ((item.price || 0) - (item.costPrice || 0)) * (item.qty || 0),
+                    date:         o.completedAt || o.date,
+                    productName:  item.productName,
+                    quantity:     item.qty,
+                    sellingPrice: item.price,
+                }))
+              );
 
         const todayStr = new Date().toDateString();
 
         // 1. Total Products
         animateValue(document.getElementById('total-products'), products.length, false, true);
 
-        // 2. Stock Value (latest purchase price × current stock)
+        // 2. Stock Value
         let stockValue = 0;
         products.forEach(prod => {
             const latestBuy = purchases
@@ -91,7 +105,7 @@ async function updateDashboard(silent) {
         });
         animateValue(document.getElementById('stock-value'), stockValue, true, false);
 
-        // 3. Total Sales
+        // 3. Total Sales (from completed orders)
         const totalSales = sales.reduce((s, x) => s + (x.totalAmount || 0), 0);
         animateValue(document.getElementById('total-sales'), totalSales, true, false);
 
@@ -109,20 +123,14 @@ async function updateDashboard(silent) {
         const margin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
         animateValue(document.getElementById('profit-margin'), margin, false, false);
 
-        // 7. Total Orders
-        animateValue(document.getElementById('total-orders'), sales.length, false, true);
+        // 7. Total Orders (completed orders count)
+        const completedOrders = orders.filter(o => o.status === 'completed').length;
+        animateValue(document.getElementById('total-orders'), completedOrders, false, true);
 
-        // 8. Greeting
         updateGreeting();
-
-        // 9. Sales chart
         renderSalesChart(sales);
-
-        // 10. Low stock & transactions
         updateLowStockAlerts(products);
-        renderRecentTransactions(purchases, sales, todayStr);
-
-        // 11. Last-updated label
+        renderRecentTransactions(purchases, orders, todayStr);
         updateLastRefreshTime();
 
     } catch (err) {
@@ -313,16 +321,25 @@ function updateLowStockAlerts(products) {
 }
 
 // ── Recent Transactions ───────────────────────────────────────
-function renderRecentTransactions(purchases, sales, todayStr) {
+function renderRecentTransactions(purchases, orders, todayStr) {
     const recentDiv = document.getElementById('recent-transactions');
     if (!recentDiv) return;
 
     const todayPurchases = purchases.filter(p => new Date(p.date).toDateString() === todayStr);
-    const todaySales     = sales.filter(s => new Date(s.date).toDateString() === todayStr);
+    const todayOrders    = orders.filter(o =>
+        (o.status === 'completed' || o.status === 'new' || o.status === 'preparing') &&
+        new Date(o.date).toDateString() === todayStr
+    );
 
     const all = [
         ...todayPurchases.map(p => ({ ...p, type: 'purchase' })),
-        ...todaySales.map(s => ({ ...s, type: 'sale' }))
+        ...todayOrders.map(o => ({
+            ...o,
+            type: 'order',
+            productName: (o.items || []).map(i => i.productName).join(', '),
+            totalAmount: o.total,
+            profit: o.profit || 0,
+        }))
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     if (all.length === 0) {
@@ -336,7 +353,7 @@ function renderRecentTransactions(purchases, sales, todayStr) {
         div.className = 'purchase-item';
         if (t.type === 'purchase') {
             div.innerHTML = `
-                <div class="title"><i class="fas fa-truck" style="color:var(--accent);margin-right:6px;"></i>Bought: ${t.productName}</div>
+                <div class="title"><i class="fas fa-truck" style="color:var(--accent);margin-right:6px;"></i>Restocked: ${t.productName}</div>
                 <div class="meta">
                     Qty ${t.quantity} × ₹${Number(t.purchasePrice).toFixed(2)} = <strong>₹${Number(t.totalCost).toFixed(2)}</strong>
                     <br><span style="opacity:.6">${new Date(t.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>
@@ -344,10 +361,16 @@ function renderRecentTransactions(purchases, sales, todayStr) {
         } else {
             const profit = t.profit || 0;
             const pc = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+            const cfg = (STATUS_CONFIG || {})[t.status] || { label: t.status, color: '#999' };
             div.innerHTML = `
-                <div class="title"><i class="fas fa-shopping-cart" style="color:var(--success);margin-right:6px;"></i>Sold: ${t.productName}</div>
+                <div class="title">
+                    <i class="fas fa-shopping-cart" style="color:var(--success);margin-right:6px;"></i>
+                    Order ${t.orderId} — ${t.customer || 'Customer'}
+                    <span style="margin-left:6px;padding:2px 7px;border-radius:8px;font-size:0.7rem;background:${cfg.color}22;color:${cfg.color};">${cfg.label}</span>
+                </div>
                 <div class="meta">
-                    Qty ${t.quantity} | <strong>₹${Number(t.totalAmount).toFixed(2)}</strong> | <span style="color:${pc}">${profit>=0?'Profit':'Loss'}: ₹${Math.abs(profit).toFixed(2)}</span>
+                    <strong>₹${Number(t.totalAmount).toFixed(2)}</strong>
+                    ${t.status === 'completed' ? `| <span style="color:${pc}">${profit>=0?'Profit':'Loss'}: ₹${Math.abs(profit).toFixed(2)}</span>` : ''}
                     <br><span style="opacity:.6">${new Date(t.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>
                 </div>`;
         }

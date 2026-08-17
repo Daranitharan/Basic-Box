@@ -13,54 +13,59 @@ function getUsers() { return Storage.get(USERS_KEY) || []; }
 function saveUsers(users) { Storage.set(USERS_KEY, users); }
 
 // ── Registration ────────────────────────────────────────────
-async function registerUser(name, email, password) {
+// Extra metadata: { shopName, phone, address, gstin }
+async function registerUser(name, email, password, meta = {}) {
     const sb = getSupabase();
 
     if (sb) {
-        // Supabase Auth sign-up
+        // Supabase Auth sign-up — email confirmation is enabled on the server side.
+        // We do NOT auto-login here; the user must click the confirmation link first.
         const { data, error } = await sb.auth.signUp({
             email,
             password,
-            options: { data: { name } }
+            options: {
+                data: { name, ...meta },
+                emailRedirectTo: window.location.origin + '/login.html'
+            }
         });
 
         if (error) return { ok: false, error: error.message };
 
-        // Profile row is created automatically by the DB trigger.
-        // Store a lightweight session object in localStorage so
-        // getCurrentUser() works on every page without an async call.
-        const user = { id: data.user.id, name, email };
-        localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+        // Return a dummy user object so the caller can show the confirmation screen.
+        // We do NOT write to localStorage — the user is not confirmed yet.
+        const user = { id: data.user?.id || '', name, email, pendingConfirmation: true };
         return { ok: true, user };
     }
 
-    // ── localStorage fallback ──
+    // ── localStorage fallback (no email confirmation needed) ──
     const users = getUsers();
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
         return { ok: false, error: 'An account with this email already exists.' };
     }
 
     const user = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        email: email.trim(),
-        password   // NOTE: stored plain-text in localStorage (dev only)
+        id:       Date.now().toString(),
+        name:     name.trim(),
+        email:    email.trim(),
+        password, // NOTE: stored plain-text in localStorage (dev only)
+        ...meta
     };
     users.push(user);
     saveUsers(users);
 
-    // Seed a welcome email into the new user's inbox
-    // (runs after setting user so Storage._prefix() uses the new user's id)
+    // Persist session immediately (no email confirmation for local mode)
     localStorage.setItem('qcommerce-user', JSON.stringify(user));
+
+    // Seed a welcome email
     const welcomeEmail = [{
-        id: 'welcome-' + user.id,
-        from: 'support@basicsbox.app',
+        id:       'welcome-' + user.id,
+        from:     'support@basicsbox.app',
         fromName: 'Basics Box Support',
-        to: email,
-        subject: 'Welcome to Basics Box!',
-        body: `Hi ${name},\n\nWelcome to Basics Box – your inventory & profit tracker.\n\nGet started by adding your products, then record your buys and sells.\n\nHappy selling!\n– The Basics Box Team`,
-        date: new Date().toISOString(),
-        folder: 'inbox'
+        to:       email,
+        subject:  'Welcome to Basics Box!',
+        body:     `Hi ${name},\n\nWelcome to Basics Box – your inventory & profit tracker.\n\nGet started by adding your products, then record your buys and sells.\n\nHappy selling!\n– The Basics Box Team`,
+        date:     new Date().toISOString(),
+        folder:   'inbox'
     }];
     Storage.set('bb-emails', welcomeEmail);
 

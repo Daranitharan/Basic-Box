@@ -146,39 +146,23 @@
     });
 
     async function loadCustomers() {
-        const [sales, orders] = await Promise.all([
-            DB.getSales(),
-            Promise.resolve(Storage.get('bb-orders') || [])
-        ]);
-
-        const profiles = buildCustomerProfiles(sales, orders);
-        renderStats(profiles, sales, orders);
+        const profiles = buildCustomerProfiles();
+        renderStats(profiles);
         renderTable(profiles);
     }
 
-    function buildCustomerProfiles(sales, orders) {
-        if (!sales) sales = Storage.get('sales') || [];
-        if (!orders) orders = Storage.get('bb-orders') || [];
-
+    function buildCustomerProfiles() {
+        const orders = Storage.get('bb-orders') || [];
         const map = {};
 
-        // From sales (sell.js flow)
-        sales.forEach(s => {
-            if (!s.customer) return;
-            const key = s.customer.toLowerCase().trim();
-            if (!map[key]) map[key] = { name: s.customer, phone: '', totalSpent: 0, orderCount: 0, lastOrder: null, saleIds: [], orderIds: [] };
-            map[key].totalSpent += s.totalAmount || 0;
-            map[key].orderCount++;
-            map[key].saleIds.push(s.id);
-            if (!map[key].lastOrder || new Date(s.date) > new Date(map[key].lastOrder)) map[key].lastOrder = s.date;
-        });
-
-        // From orders (orders.js flow)
+        // Only count completed orders for revenue
         orders.forEach(o => {
             if (!o.customer) return;
             const key = o.customer.toLowerCase().trim();
-            if (!map[key]) map[key] = { name: o.customer, phone: o.phone || '', totalSpent: 0, orderCount: 0, lastOrder: null, saleIds: [], orderIds: [] };
-            map[key].totalSpent += o.total || 0;
+            if (!map[key]) map[key] = { name: o.customer, phone: o.phone || '', totalSpent: 0, orderCount: 0, lastOrder: null, orderIds: [] };
+            if (o.status === 'completed') {
+                map[key].totalSpent += o.total || 0;
+            }
             map[key].orderCount++;
             map[key].orderIds.push(o.id);
             if (o.phone && !map[key].phone) map[key].phone = o.phone;

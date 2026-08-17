@@ -515,10 +515,28 @@
             filename = 'products.csv';
             data = data.map(p => [p.sku, p.name, p.category||'', p.unit, p.currentStock??0, p.minStock??0, p.supplier||'']);
         } else if (type === 'sales') {
-            data = await DB.getSales();
-            headers = ['Date','Product','SKU','Qty','Selling Price','Total Amount','Cost Price','Profit','Customer'];
+            // Sales now come from completed orders
+            const orders = Storage.get('bb-orders') || [];
+            const rawSales = [];
+            orders.filter(o => o.status === 'completed').forEach(o => {
+                (o.items || []).forEach(item => {
+                    rawSales.push({
+                        date:         o.completedAt || o.date,
+                        productName:  item.productName,
+                        sku:          item.sku || '',
+                        quantity:     item.qty,
+                        sellingPrice: item.price || 0,
+                        totalAmount:  (item.price || 0) * (item.qty || 0),
+                        costPrice:    item.costPrice || 0,
+                        profit:       ((item.price || 0) - (item.costPrice || 0)) * (item.qty || 0),
+                        customer:     o.customer || '',
+                        orderId:      o.orderId,
+                    });
+                });
+            });
+            headers = ['Date','Order ID','Product','SKU','Qty','Selling Price','Total Amount','Cost Price','Profit','Customer'];
             filename = 'sales.csv';
-            data = data.map(s => [new Date(s.date).toLocaleString(), s.productName, s.sku||'', s.quantity, s.sellingPrice, s.totalAmount, s.costPrice||0, s.profit||0, s.customer||'']);
+            data = rawSales.map(s => [new Date(s.date).toLocaleString(), s.orderId, s.productName, s.sku, s.quantity, s.sellingPrice, s.totalAmount, s.costPrice, s.profit.toFixed(2), s.customer]);
         } else if (type === 'purchases') {
             data = await DB.getPurchases();
             headers = ['Date','Product','SKU','Qty','Purchase Price','Total Cost','Supplier'];

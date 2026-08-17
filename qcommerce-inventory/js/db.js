@@ -265,5 +265,109 @@ const DB = {
         sales.unshift(sale);
         Storage.set('sales', sales);
         return { ok: true };
+    },
+
+    // ── Orders ─────────────────────────────────────────────────
+
+    async getOrders() {
+        const sb  = getSupabase();
+        const key = 'bb-orders';
+        if (!sb) return Storage.get(key) || [];
+
+        const uid = await getSupabaseUserId();
+        const { data, error } = await sb
+            .from('orders')
+            .select('*')
+            .eq('user_id', uid)
+            .order('date', { ascending: false });
+
+        if (error) { console.error('DB.getOrders:', error); return Storage.get(key) || []; }
+
+        // Convert snake_case DB → camelCase JS manually for orders
+        const orders = (data || []).map(row => ({
+            id:            row.id,
+            orderId:       row.order_id_label,
+            orderType:     row.order_type   || 'offline',
+            customer:      row.customer     || '',
+            phone:         row.phone        || '',
+            address:       row.address      || '',
+            items:         row.items        || [],
+            subtotal:      Number(row.subtotal    || 0),
+            totalCost:     Number(row.total_cost  || 0),
+            profit:        Number(row.profit      || 0),
+            deliveryFee:   Number(row.delivery_fee|| 0),
+            total:         Number(row.total       || 0),
+            payment:       row.payment       || 'cash',
+            paymentStatus: row.payment_status|| 'pending',
+            status:        row.status        || 'new',
+            timeline:      row.timeline      || [],
+            notes:         row.notes         || '',
+            date:          row.date,
+            completedAt:   row.completed_at  || null,
+        }));
+
+        Storage.set(key, orders);
+        return orders;
+    },
+
+    async saveOrder(order) {
+        const sb  = getSupabase();
+        const key = 'bb-orders';
+
+        // Always update local cache
+        let orders = Storage.get(key) || [];
+        const idx  = orders.findIndex(o => o.id === order.id);
+        if (idx !== -1) orders[idx] = { ...orders[idx], ...order };
+        else orders.unshift(order);
+        Storage.set(key, orders);
+
+        if (!sb) return { ok: true };
+
+        const uid = await getSupabaseUserId();
+        const row = {
+            id:             order.id,
+            user_id:        uid,
+            order_id_label: order.orderId,
+            order_type:     order.orderType     || 'offline',
+            customer:       order.customer      || '',
+            phone:          order.phone         || '',
+            address:        order.address       || '',
+            items:          order.items         || [],
+            subtotal:       order.subtotal       || 0,
+            total_cost:     order.totalCost      || 0,
+            profit:         order.profit         || 0,
+            delivery_fee:   order.deliveryFee    || 0,
+            total:          order.total          || 0,
+            payment:        order.payment        || 'cash',
+            payment_status: order.paymentStatus  || 'pending',
+            status:         order.status         || 'new',
+            timeline:       order.timeline       || [],
+            notes:          order.notes          || '',
+            date:           order.date,
+            completed_at:   order.completedAt    || null,
+        };
+
+        const { error } = await sb.from('orders').upsert(row, { onConflict: 'id' });
+        if (error) { console.error('DB.saveOrder:', error); return { ok: false, error }; }
+        return { ok: true };
+    },
+
+    async updateOrderStatus(orderId, status, extra = {}) {
+        const sb  = getSupabase();
+        const key = 'bb-orders';
+
+        let orders = Storage.get(key) || [];
+        const idx  = orders.findIndex(o => o.id === orderId);
+        if (idx === -1) return { ok: false, error: 'Order not found' };
+
+        orders[idx] = { ...orders[idx], status, ...extra };
+        Storage.set(key, orders);
+
+        if (!sb) return { ok: true };
+
+        const updateData = { status, ...( extra.completedAt ? { completed_at: extra.completedAt } : {} ) };
+        const { error } = await sb.from('orders').update(updateData).eq('id', orderId);
+        if (error) { console.error('DB.updateOrderStatus:', error); return { ok: false, error }; }
+        return { ok: true };
     }
 };

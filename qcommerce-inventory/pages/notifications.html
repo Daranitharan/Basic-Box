@@ -511,7 +511,6 @@
     // ── Build notifications from live data ────────────────────
     async function getAllNotifs() {
         const products  = await DB.getProducts();
-        const sales     = await DB.getSales();
         const purchases = await DB.getPurchases();
         const notifs    = [];
 
@@ -519,7 +518,7 @@
         products.forEach(p => {
             const stock = p.currentStock ?? p.stock ?? 0;
             const min   = p.minStock ?? 0;
-            if (min === 0) return; // skip products with no minimum set
+            if (min === 0) return;
             if (stock === 0) {
                 notifs.push({
                     id: `stock-out-${p.id}`,
@@ -543,29 +542,44 @@
             }
         });
 
-        // TODAY's transactions only
-        sales.filter(s => isToday(s.date)).forEach(s => {
-            const profit = s.profit || 0;
+        // TODAY's completed orders as "sale" notifications
+        const orders = Storage.get('bb-orders') || [];
+        orders.filter(o => o.status === 'completed' && isToday(o.completedAt || o.date)).forEach(o => {
+            const profit = o.profit || 0;
             notifs.push({
-                id: `sale-${s.id}`,
-                type: 'transactions',
-                icon: 'fa-shopping-cart',
-                iconClass: profit >= 0 ? 'success' : 'danger',
-                title: `Sold: ${s.productName}`,
-                desc:  `Qty ${s.quantity} × ₹${Number(s.sellingPrice).toFixed(2)} = ₹${Number(s.totalAmount).toFixed(2)} | ${profit >= 0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}`,
-                time:  s.date
+                id:        `order-${o.id}`,
+                type:      'transactions',
+                icon:      'fa-shopping-cart',
+                iconClass: profit >= 0 ? 'success' : 'warning',
+                title:     `Order Completed: ${o.orderId}`,
+                desc:      `${o.customer || 'Customer'} · ₹${Number(o.total || 0).toFixed(2)} | ${profit >= 0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}`,
+                time:      o.completedAt || o.date
             });
         });
 
+        // TODAY's new orders (so merchant is notified of incoming orders)
+        orders.filter(o => o.status === 'new' && isToday(o.date)).forEach(o => {
+            notifs.push({
+                id:        `new-order-${o.id}`,
+                type:      'transactions',
+                icon:      'fa-inbox',
+                iconClass: 'info',
+                title:     `New Order: ${o.orderId}`,
+                desc:      `${o.customer || 'Customer'} · ₹${Number(o.total || 0).toFixed(2)} · ${o.orderType === 'online' ? 'Online' : 'Offline'}`,
+                time:      o.date
+            });
+        });
+
+        // TODAY's purchases
         purchases.filter(p => isToday(p.date)).forEach(p => {
             notifs.push({
-                id: `purchase-${p.id}`,
-                type: 'transactions',
-                icon: 'fa-truck',
+                id:        `purchase-${p.id}`,
+                type:      'transactions',
+                icon:      'fa-truck',
                 iconClass: 'info',
-                title: `Bought: ${p.productName}`,
-                desc:  `Qty ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}${p.supplier ? ` | Supplier: ${p.supplier}` : ''}`,
-                time:  p.date
+                title:     `Bought: ${p.productName}`,
+                desc:      `Qty ${p.quantity} × ₹${Number(p.purchasePrice).toFixed(2)} = ₹${Number(p.totalCost).toFixed(2)}${p.supplier ? ` | Supplier: ${p.supplier}` : ''}`,
+                time:      p.date
             });
         });
 

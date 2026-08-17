@@ -10,17 +10,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadInventory() {
-    const [products, purchases, sales] = await Promise.all([
+    const [products, purchases] = await Promise.all([
         DB.getProducts(),
-        DB.getPurchases(),
-        DB.getSales()
+        DB.getPurchases()
     ]);
 
     invProducts = products;
     renderSummaryCards(products, purchases);
 
     if (currentTab === 'stock')       renderStockTable(products, purchases);
-    if (currentTab === 'movement')    renderMovement(purchases, sales);
+    if (currentTab === 'movement')    renderMovement(purchases);
     if (currentTab === 'adjustments') renderAdjustments();
 }
 
@@ -139,19 +138,32 @@ function renderStockTable(products, purchases) {
 }
 
 // ── Movement history ──────────────────────────────────────────
-function renderMovement(purchases, sales) {
+function renderMovement(purchases) {
     const list = document.getElementById('movementList');
     if (!list) return;
 
+    // Sales data from completed orders
+    const orders = Storage.get('bb-orders') || [];
+    const completedOrders = orders.filter(o => o.status === 'completed');
+
     const all = [
         ...purchases.map(p => ({ type: 'in',  title: `Restocked: ${p.productName}`, meta: `Qty +${p.quantity} | ₹${Number(p.purchasePrice).toFixed(2)}/unit${p.supplier ? ' | ' + p.supplier : ''}`, date: p.date, qty: p.quantity })),
-        ...sales.map(s => ({ type: 'out', title: `Sold: ${s.productName}`, meta: `Qty −${s.quantity} | ₹${Number(s.sellingPrice).toFixed(2)}/unit`, date: s.date, qty: -s.quantity }))
-    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        ...completedOrders.flatMap(o =>
+            (o.items || []).map(item => ({
+                type: 'out',
+                title: `Sold: ${item.productName} (Order ${o.orderId})`,
+                meta: `Qty −${item.qty} | ₹${Number(item.price || 0).toFixed(2)}/unit | Customer: ${o.customer || 'N/A'}`,
+                date: o.completedAt || o.date,
+                qty: -item.qty
+            }))
+        )
+    ];
 
     const adjustments = Storage.get(ADJ_KEY) || [];
     adjustments.forEach(a => all.push({
         type: 'adj', title: `Adjusted: ${a.productName}`, meta: `Reason: ${a.reason}${a.notes ? ' — ' + a.notes : ''}`, date: a.date, qty: a.change
     }));
+
     all.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     if (all.length === 0) {

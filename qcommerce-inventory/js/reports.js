@@ -12,8 +12,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadReports() {
         const period = periodSelect.value;
-        const purchases = await DB.getPurchases();
-        const sales     = await DB.getSales();
+        const [products, purchases] = await Promise.all([
+            DB.getProducts(),
+            DB.getPurchases()
+        ]);
+
+        // Sales data now comes from completed orders
+        const sales = typeof window.getCompletedOrderSales === 'function'
+            ? window.getCompletedOrderSales()
+            : (() => {
+                const orders = Storage.get('bb-orders') || [];
+                const result = [];
+                orders.filter(o => o.status === 'completed').forEach(o => {
+                    (o.items || []).forEach(item => {
+                        result.push({
+                            date:         o.completedAt || o.date,
+                            productId:    item.productId,
+                            productName:  item.productName,
+                            sku:          item.sku || '',
+                            quantity:     item.qty,
+                            sellingPrice: item.price,
+                            totalAmount:  (item.price || 0) * (item.qty || 0),
+                            costPrice:    item.costPrice || 0,
+                            profit:       ((item.price || 0) - (item.costPrice || 0)) * (item.qty || 0),
+                            customer:     o.customer || '',
+                            orderId:      o.id,
+                            orderLabel:   o.orderId,
+                        });
+                    });
+                });
+                return result;
+            })();
 
         // Filter by selected period
         const filteredPurchases = purchases.filter(p => inPeriod(p.date, period));

@@ -131,11 +131,14 @@ CREATE TABLE IF NOT EXISTS public.orders (
     id              TEXT PRIMARY KEY,
     user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     order_id_label  TEXT NOT NULL,
+    order_type      TEXT DEFAULT 'offline',
     customer        TEXT,
     phone           TEXT,
     address         TEXT,
     items           JSONB NOT NULL DEFAULT '[]',
     subtotal        NUMERIC(12,2) DEFAULT 0,
+    total_cost      NUMERIC(12,2) DEFAULT 0,
+    profit          NUMERIC(12,2) DEFAULT 0,
     delivery_fee    NUMERIC(12,2) DEFAULT 0,
     total           NUMERIC(12,2) DEFAULT 0,
     payment         TEXT DEFAULT 'cash',
@@ -143,7 +146,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     status          TEXT DEFAULT 'new',
     timeline        JSONB DEFAULT '[]',
     notes           TEXT,
-    date            TIMESTAMPTZ DEFAULT NOW()
+    date            TIMESTAMPTZ DEFAULT NOW(),
+    completed_at    TIMESTAMPTZ
 );
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
