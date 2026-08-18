@@ -11,9 +11,11 @@
         /* ── Two-column layout ── */
         .notif-two-col {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+            gap: 22px;
             align-items: start;
+            width: 100%;
+            max-width: 1220px;
         }
 
         @media (max-width: 900px) {
@@ -260,6 +262,33 @@
 
         .card-header-actions {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            justify-content: flex-end;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dashboard-search-container.compact-search {
+            min-width: 210px;
+            width: 240px;
+            max-width: 100%;
+            flex: 1 1 220px;
+        }
+
+        .notif-item,
+        .email-item {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .notif-item.selected,
+        .email-item.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(255, 122, 0, 0.18);
+        }
+
+        .btn.btn-danger {
+            min-width: 130px;
+            justify-content: center;
         }
     </style>
 </head>
