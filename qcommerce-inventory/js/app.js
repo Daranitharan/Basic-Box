@@ -50,6 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const shopNameChip = document.getElementById('shopNameChip');
+    if (shopNameChip) {
+        const settings = Storage.get('bb-settings') || {};
+        shopNameChip.textContent = settings.storeName || 'Basics Box';
+    }
+
+    bindRecentRangeMenu();
     await updateDashboard(false);
     setupDashboardSearch();
 });
@@ -398,6 +405,107 @@ function updateGreeting() {
     if (!el) return;
     const user = getCurrentUser();
     if (user?.name) el.textContent = 'Welcome back, ' + user.name.split(' ')[0] + '!';
+
+    const shopNameChip = document.getElementById('shopNameChip');
+    if (shopNameChip) {
+        const settings = Storage.get('bb-settings') || {};
+        shopNameChip.textContent = settings.storeName || 'Basics Box';
+    }
+}
+
+function bindRecentRangeMenu() {
+    const trigger = document.getElementById('recentRangeTrigger');
+    const menu = document.getElementById('recentRangeMenu');
+    if (!trigger || !menu) return;
+
+    const setRange = (range) => {
+        const activeOpt = menu.querySelector('.recent-range-option.active');
+        if (activeOpt) activeOpt.classList.remove('active');
+        const selected = menu.querySelector(`[data-range="${range}"]`);
+        if (selected) selected.classList.add('active');
+        trigger.querySelector('span').textContent = selected ? selected.textContent : 'Last 7 days';
+        menu.classList.remove('open');
+        trigger.classList.remove('open');
+        renderRecentTransactionsByRange(range);
+    };
+
+    trigger.addEventListener('click', () => {
+        const isOpen = menu.classList.contains('open');
+        menu.classList.toggle('open', !isOpen);
+        trigger.classList.toggle('open', !isOpen);
+    });
+
+    menu.querySelectorAll('.recent-range-option').forEach(option => {
+        option.addEventListener('click', () => setRange(option.dataset.range));
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!trigger.contains(event.target) && !menu.contains(event.target)) {
+            menu.classList.remove('open');
+            trigger.classList.remove('open');
+        }
+    });
+}
+
+function renderRecentTransactionsByRange(days) {
+    const recentDiv = document.getElementById('recent-transactions');
+    if (!recentDiv) return;
+    const purchases = DB && DB.getPurchases ? DB.getPurchases() : Promise.resolve([]);
+    const orders = Storage.get('bb-orders') || [];
+    const rangeDays = Number(days || 7);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
+    cutoff.setHours(0, 0, 0, 0);
+
+    const records = [];
+    const allPurchases = Array.isArray(DB && DB.getPurchases ? [] : []) ? [] : [];
+    Promise.resolve(DB.getPurchases()).then((purchaseList) => {
+        purchaseList.forEach((p) => {
+            const pDate = new Date(p.date);
+            if (pDate >= cutoff) records.push({ ...p, type: 'purchase' });
+        });
+
+        orders.forEach((o) => {
+            const d = new Date(o.date || o.completedAt || new Date());
+            if (d >= cutoff && (o.status === 'completed' || o.status === 'new' || o.status === 'preparing')) {
+                records.push({
+                    ...o,
+                    type: 'order',
+                    productName: (o.items || []).map(i => i.productName).join(', '),
+                    totalAmount: o.total,
+                    profit: o.profit || 0,
+                });
+            }
+        });
+
+        records.sort((a, b) => new Date(b.date || b.completedAt || b.createdAt || b.created_on) - new Date(a.date || a.completedAt || a.createdAt || a.created_on));
+        if (!records.length) {
+            recentDiv.innerHTML = '<p class="empty-text">No transactions in this range.</p>';
+            return;
+        }
+
+        recentDiv.innerHTML = '';
+        records.forEach((t) => {
+            const div = document.createElement('div');
+            div.className = 'purchase-item';
+            if (t.type === 'purchase') {
+                div.innerHTML = `
+                    <div class="title"><i class="fas fa-truck" style="color:var(--accent);margin-right:6px;"></i>Restocked: ${t.productName}</div>
+                    <div class="meta">Qty ${t.quantity} × ₹${Number(t.purchasePrice).toFixed(2)} = <strong>₹${Number(t.totalCost).toFixed(2)}</strong><br><span style="opacity:.6">${new Date(t.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+            } else {
+                const profit = t.profit || 0;
+                const cfg = (STATUS_CONFIG || {})[t.status] || { label: t.status, color: '#999' };
+                div.innerHTML = `
+                    <div class="title">
+                        <i class="fas fa-shopping-cart" style="color:var(--success);margin-right:6px;"></i>
+                        Order ${t.orderId} — ${t.customer || 'Customer'}
+                        <span style="margin-left:6px;padding:2px 7px;border-radius:8px;font-size:0.7rem;background:${cfg.color}22;color:${cfg.color};">${cfg.label}</span>
+                    </div>
+                    <div class="meta"><strong>₹${Number(t.totalAmount).toFixed(2)}</strong>${t.status === 'completed' ? ` | <span style="color:${profit >=0 ? 'var(--success)' : 'var(--danger)'}">${profit >=0 ? 'Profit' : 'Loss'}: ₹${Math.abs(profit).toFixed(2)}</span>` : ''}<br><span style="opacity:.6">${new Date(t.date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+            }
+            recentDiv.appendChild(div);
+        });
+    });
 }
 
 // ── Search ────────────────────────────────────────────────────

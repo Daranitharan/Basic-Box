@@ -1348,6 +1348,113 @@ textarea:focus {
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.shop-name-chip {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.profit-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.recent-range-select {
+    position: relative;
+}
+
+.recent-range-trigger {
+    min-width: 160px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.86rem;
+    font-weight: 600;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.recent-range-trigger.open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.recent-range-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 180px;
+    display: none;
+    background: rgba(19,21,28,0.96);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    z-index: 30;
+}
+
+.recent-range-menu.open { display: block; }
+
+.recent-range-option {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    padding: 10px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.recent-range-option:hover,
+.recent-range-option.active {
+    background: rgba(96,165,250,0.22);
+}
+
+.compact-search {
+    min-width: 220px;
+}
+
+.notification-row-select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification-row-select input[type="checkbox"],
+.email-row-select input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
+.notif-item.selected,
+.email-item.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
 .badge {
     display: inline-block;
     padding: 4px 12px;

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBtns = document.querySelectorAll('.view-btn');
     const tableView = document.getElementById('tableView');
     const gridView = document.getElementById('gridView');
+    const productSearchInput = document.getElementById('productSearchInput');
 
     const allowedViews = ['table', 'grid', 'compact'];
     let currentView = Storage.get('products-view') || 'table';
@@ -101,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (categoryArrow) categoryArrow.classList.remove('rotated');
         });
     });
+
+    if (productSearchInput) {
+        productSearchInput.addEventListener('input', () => loadProducts());
+    }
 
     // Load products when page opens
     loadProducts();
@@ -254,6 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and display products
     async function loadProducts() {
         let products = await DB.getProducts();
+
+        const searchTerm = (productSearchInput?.value || '').trim().toLowerCase();
+        if (searchTerm) {
+            products = products.filter(p =>
+                (p.name || '').toLowerCase().includes(searchTerm) ||
+                (p.sku || '').toLowerCase().includes(searchTerm) ||
+                (p.category || '').toLowerCase().includes(searchTerm)
+            );
+        }
         
         // Filter by category if a filter is active
         if (currentCategoryFilter) {

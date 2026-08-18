@@ -158,7 +158,10 @@
         <!-- PROFIT HIGHLIGHT SECTION -->
         <section class="profit-highlight">
             <div class="profit-main">
-                <div class="profit-label">Total Profit Earned</div>
+                <div class="profit-label-row">
+                    <div class="profit-label">Total Profit Earned</div>
+                    <div class="shop-name-chip" id="shopNameChip">Basics Box</div>
+                </div>
                 <div class="profit-amount" id="total-profit">₹0.00</div>
                 <div class="profit-change positive">+0% from last period</div>
             </div>
@@ -257,7 +260,16 @@
             <section class="card">
                 <div class="card-header">
                     <h3>Recent Transactions</h3>
-                    <span style="font-size:0.75rem;color:var(--text-faint);">Last 7 days</span>
+                    <div class="recent-range-select" id="recentRangeSelect">
+                        <button type="button" class="recent-range-trigger" id="recentRangeTrigger">
+                            <span>Last 7 days</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="recent-range-menu" id="recentRangeMenu">
+                            <button type="button" class="recent-range-option active" data-range="7">Last 7 days</button>
+                            <button type="button" class="recent-range-option" data-range="1">Today</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="dashboard-search-container">

@@ -319,6 +319,13 @@
                         <button class="notif-tab" data-tab="transactions">Recent Transactions</button>
                     </div>
                     <div class="card-header-actions">
+                        <div class="dashboard-search-container compact-search" style="margin-bottom:0; min-width:220px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="notificationSearch" class="dashboard-search-input" placeholder="Search messages...">
+                        </div>
+                        <button class="btn btn-danger" id="deleteSelectedNotifBtn" style="font-size:0.82rem; padding:8px 14px; display:none;">
+                            <i class="fas fa-trash"></i> Delete selected
+                        </button>
                         <button class="btn btn-secondary" id="clearNotifsBtn" style="font-size:0.82rem; padding:8px 14px;">
                             <i class="fas fa-check-double"></i> Mark all read
                         </button>
@@ -341,6 +348,15 @@
                         <button class="notif-tab active" data-email-tab="all">All</button>
                         <button class="notif-tab" data-email-tab="inbox">Inbox</button>
                         <button class="notif-tab" data-email-tab="sent">Sent</button>
+                    </div>
+                    <div class="card-header-actions">
+                        <div class="dashboard-search-container compact-search" style="margin-bottom:0; min-width:220px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="emailSearch" class="dashboard-search-input" placeholder="Search emails...">
+                        </div>
+                        <button class="btn btn-danger" id="deleteSelectedEmailBtn" style="font-size:0.82rem; padding:8px 14px; display:none;">
+                            <i class="fas fa-trash"></i> Delete selected
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -480,6 +496,11 @@
             renderEmails();
         });
 
+        document.getElementById('notificationSearch').addEventListener('input', renderNotifs);
+        document.getElementById('emailSearch').addEventListener('input', renderEmails);
+        document.getElementById('deleteSelectedNotifBtn').addEventListener('click', deleteSelectedNotifs);
+        document.getElementById('deleteSelectedEmailBtn').addEventListener('click', deleteSelectedEmails);
+
         // ── Initial render ─────────────────────────────────────
         await renderNotifs();
         renderEmails();
@@ -487,6 +508,9 @@
     });
 
     // ── Helpers ───────────────────────────────────────────────
+    const selectedNotifIds = new Set();
+    const selectedEmailIds = new Set();
+
     function buildReadSet() {
         const raw = localStorage.getItem(NOTIF_READ_KEY);
         return new Set(raw ? JSON.parse(raw) : []);
@@ -494,6 +518,15 @@
 
     function saveReadSet(set) {
         localStorage.setItem(NOTIF_READ_KEY, JSON.stringify([...set]));
+    }
+
+    function getDeletedNotifSet() {
+        const raw = localStorage.getItem('bb-notifs-hidden');
+        return new Set(raw ? JSON.parse(raw) : []);
+    }
+
+    function saveDeletedNotifSet(set) {
+        localStorage.setItem('bb-notifs-hidden', JSON.stringify([...set]));
     }
 
     function isToday(dateStr) {
@@ -591,10 +624,21 @@
 
         const allNotifs = await getAllNotifs();
         const readSet   = buildReadSet();
+        const deletedSet = getDeletedNotifSet();
+        const searchTerm = (document.getElementById('notificationSearch')?.value || '').trim().toLowerCase();
 
-        const filtered = currentNotifTab === 'all'
+        let filtered = currentNotifTab === 'all'
             ? allNotifs
             : allNotifs.filter(n => n.type === currentNotifTab);
+
+        filtered = filtered.filter(n => !deletedSet.has(n.id));
+
+        if (searchTerm) {
+            filtered = filtered.filter(n =>
+                (n.title || '').toLowerCase().includes(searchTerm) ||
+                (n.desc || '').toLowerCase().includes(searchTerm)
+            );
+        }
 
         if (filtered.length === 0) {
             listEl.innerHTML = `<div class="empty-notif"><i class="fas fa-bell-slash"></i><p>${
@@ -602,16 +646,22 @@
                     ? 'No transactions today yet.'
                     : 'No notifications in this category.'
             }</p></div>`;
+            document.getElementById('deleteSelectedNotifBtn').style.display = 'none';
             return;
         }
 
         listEl.innerHTML = '';
         filtered.forEach(n => {
             const isRead  = readSet.has(n.id);
+            const isSelected = selectedNotifIds.has(n.id);
             const timeStr = isNaN(new Date(n.time)) ? '' : new Date(n.time).toLocaleString('en-IN');
             const div     = document.createElement('div');
-            div.className = `notif-item${isRead ? '' : ' unread'}`;
+            div.className = `notif-item${isRead ? '' : ' unread'}${isSelected ? ' selected' : ''}`;
+            div.dataset.notifId = n.id;
             div.innerHTML = `
+                <div class="notification-row-select">
+                    <input type="checkbox" class="notif-checkbox" ${isSelected ? 'checked' : ''}>
+                </div>
                 <div class="notif-icon ${n.iconClass}">
                     <i class="fas ${n.icon}"></i>
                 </div>
@@ -622,7 +672,17 @@
                 </div>
                 ${!isRead ? '<div class="notif-unread-dot"></div>' : ''}
             `;
-            div.addEventListener('click', () => {
+
+            const checkbox = div.querySelector('.notif-checkbox');
+            checkbox.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (checkbox.checked) selectedNotifIds.add(n.id); else selectedNotifIds.delete(n.id);
+                updateNotifDeleteButton();
+                div.classList.toggle('selected', checkbox.checked);
+            });
+
+            div.addEventListener('click', (event) => {
+                if (event.target.closest('.notif-checkbox')) return;
                 readSet.add(n.id);
                 saveReadSet(readSet);
                 div.classList.remove('unread');
@@ -631,6 +691,25 @@
             });
             listEl.appendChild(div);
         });
+
+        updateNotifDeleteButton();
+    }
+
+    function updateNotifDeleteButton() {
+        const btn = document.getElementById('deleteSelectedNotifBtn');
+        if (!btn) return;
+        btn.style.display = selectedNotifIds.size ? 'inline-flex' : 'none';
+    }
+
+    function deleteSelectedNotifs() {
+        if (!selectedNotifIds.size) return;
+        const deletedSet = getDeletedNotifSet();
+        selectedNotifIds.forEach(id => deletedSet.add(id));
+        saveDeletedNotifSet(deletedSet);
+        selectedNotifIds.clear();
+        renderNotifs();
+        updateBadge();
+        showToast('Selected messages deleted.', 'success');
     }
 
     // ── Render email list ─────────────────────────────────────
@@ -639,6 +718,7 @@
         const emails = Storage.get(EMAIL_KEY) || [];
         const user   = getCurrentUser();
         const myEmail = user?.email || '';
+        const searchTerm = (document.getElementById('emailSearch')?.value || '').trim().toLowerCase();
 
         let filtered = emails;
         if (currentEmailTab === 'inbox') {
@@ -647,8 +727,18 @@
             filtered = emails.filter(e => e.folder === 'sent' || e.from === myEmail);
         }
 
+        if (searchTerm) {
+            filtered = filtered.filter(email =>
+                (email.subject || '').toLowerCase().includes(searchTerm) ||
+                (email.body || '').toLowerCase().includes(searchTerm) ||
+                (email.fromName || email.from || '').toLowerCase().includes(searchTerm) ||
+                (email.to || '').toLowerCase().includes(searchTerm)
+            );
+        }
+
         if (filtered.length === 0) {
             listEl.innerHTML = `<div class="empty-notif"><i class="fas fa-envelope-open"></i><p>No emails here yet.</p></div>`;
+            document.getElementById('deleteSelectedEmailBtn').style.display = 'none';
             return;
         }
 
@@ -659,6 +749,7 @@
         listEl.innerHTML = '';
         filtered.forEach(email => {
             const isRead = readSet.has(email.id);
+            const isSelected = selectedEmailIds.has(email.id);
             const isSent = email.folder === 'sent' || email.from === myEmail;
             const initials = (isSent ? email.to : email.fromName || email.from)
                 .substring(0, 2).toUpperCase();
@@ -668,8 +759,12 @@
             });
 
             const div = document.createElement('div');
-            div.className = `email-item${isRead ? '' : ' unread'}`;
+            div.className = `email-item${isRead ? '' : ' unread'}${isSelected ? ' selected' : ''}`;
+            div.dataset.emailId = email.id;
             div.innerHTML = `
+                <div class="notification-row-select">
+                    <input type="checkbox" class="email-checkbox" ${isSelected ? 'checked' : ''}>
+                </div>
                 <div class="email-avatar">${initials}</div>
                 <div class="email-meta">
                     <div class="email-from">
@@ -680,16 +775,43 @@
                 </div>
                 ${!isRead ? '<div class="email-unread-dot"></div>' : ''}
             `;
-            div.addEventListener('click', () => {
+
+            const checkbox = div.querySelector('.email-checkbox');
+            checkbox.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (checkbox.checked) selectedEmailIds.add(email.id); else selectedEmailIds.delete(email.id);
+                updateEmailDeleteButton();
+                div.classList.toggle('selected', checkbox.checked);
+            });
+
+            div.addEventListener('click', (event) => {
+                if (event.target.closest('.email-checkbox')) return;
                 readSet.add(email.id);
                 localStorage.setItem(emailReadKey, JSON.stringify([...readSet]));
                 div.classList.remove('unread');
                 div.querySelector('.email-unread-dot')?.remove();
-                // Show email body in toast for now
                 showToast(`${email.subject}: ${email.body.substring(0, 80)}${email.body.length > 80 ? '…' : ''}`, 'info');
             });
             listEl.appendChild(div);
         });
+
+        updateEmailDeleteButton();
+    }
+
+    function updateEmailDeleteButton() {
+        const btn = document.getElementById('deleteSelectedEmailBtn');
+        if (!btn) return;
+        btn.style.display = selectedEmailIds.size ? 'inline-flex' : 'none';
+    }
+
+    function deleteSelectedEmails() {
+        if (!selectedEmailIds.size) return;
+        const emails = Storage.get(EMAIL_KEY) || [];
+        const remaining = emails.filter(email => !selectedEmailIds.has(email.id));
+        Storage.set(EMAIL_KEY, remaining);
+        selectedEmailIds.clear();
+        renderEmails();
+        showToast('Selected emails deleted.', 'success');
     }
 
     // ── Update badge count ────────────────────────────────────

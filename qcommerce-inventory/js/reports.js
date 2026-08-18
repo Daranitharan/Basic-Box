@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const periodSelect = document.getElementById('periodSelect');
     const tableBody = document.getElementById('reportsTableBody');
     const noReportsMsg = document.getElementById('noReportsMsg');
+    const reportSearchInput = document.getElementById('reportSearchInput');
 
     // Load reports on page open
     loadReports();
 
     periodSelect.addEventListener('change', loadReports);
+    if (reportSearchInput) reportSearchInput.addEventListener('input', loadReports);
 
     async function loadReports() {
         const period = periodSelect.value;
@@ -107,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render combined transaction history table
     function renderTable(purchases, sales) {
         tableBody.innerHTML = '';
+        const searchTerm = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
 
         // Tag each record with its type and normalize fields
         const purchaseRows = purchases.map(p => ({
@@ -131,7 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
             profitValue: s.profit || 0
         }));
 
-        const allRows = [...purchaseRows, ...saleRows];
+        let allRows = [...purchaseRows, ...saleRows];
+        if (searchTerm) {
+            allRows = allRows.filter(row =>
+                (row.product || '').toLowerCase().includes(searchTerm) ||
+                (row.type || '').toLowerCase().includes(searchTerm) ||
+                (String(row.qty || '')).toLowerCase().includes(searchTerm)
+            );
+        }
         allRows.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (allRows.length === 0) {

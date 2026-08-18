@@ -419,58 +419,65 @@
         <!-- Products Section -->
         <section class="card">
             <div class="card-header" style="display: block;">
-                <h3 id="productsHeading" style="margin-bottom: 12px;">All Products</h3>
-                <!-- Category Filter Dropdown -->
-                <div class="custom-category-filter">
-                    <button class="category-filter-trigger" id="categoryFilterTrigger">
-                        <span class="selected-category-display">
-                            <i class="fas fa-th"></i> All Products
-                        </span>
-                        <i class="fas fa-chevron-down category-filter-arrow"></i>
-                    </button>
-                    <div class="category-filter-dropdown" id="categoryFilterDropdown">
-                        <div class="category-filter-list">
-                            <div class="category-option-filter active" data-category="">
-                                <i class="fas fa-th"></i> All Products
-                            </div>
-                            <div class="category-option-filter" data-category="biscuit">
-                                <i class="fas fa-cookie-bite"></i> Biscuit
-                            </div>
-                            <div class="category-option-filter" data-category="juice">
-                                <i class="fas fa-glass-whiskey"></i> Juice
-                            </div>
-                            <div class="category-option-filter" data-category="food">
-                                <i class="fas fa-utensils"></i> Food
-                            </div>
-                            <div class="category-option-filter" data-category="cool drink">
-                                <i class="fas fa-mug-hot"></i> Cool Drink
-                            </div>
-                            <div class="category-option-filter" data-category="vegetables">
-                                <i class="fas fa-leaf"></i> Vegetables
-                            </div>
-                            <div class="category-option-filter" data-category="fruits">
-                                <i class="fas fa-apple-alt"></i> Fruits
-                            </div>
-                            <div class="category-option-filter" data-category="medicines">
-                                <i class="fas fa-pills"></i> Medicines
-                            </div>
-                            <div class="category-option-filter" data-category="cleaning essential">
-                                <i class="fas fa-spray-can"></i> Cleaning Essential
-                            </div>
-                            <div class="category-option-filter" data-category="personal care">
-                                <i class="fas fa-spa"></i> Personal Care
-                            </div>
-                            <div class="category-option-filter" data-category="grocery items">
-                                <i class="fas fa-shopping-basket"></i> Grocery Items
-                            </div>
-                            <div class="category-option-filter" data-category="chips">
-                                <i class="fas fa-fire"></i> Chips
-                            </div>
-                            <div class="category-option-filter" data-category="chocolate">
-                                <i class="fas fa-candy-cane"></i> Chocolate
-                            </div>
-                            <div class="category-option-filter" data-category="others">
-                                <i class="fas fa-box-open"></i> Others
+                <div class="products-toolbar" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <h3 id="productsHeading" style="margin-bottom: 0;">All Products</h3>
+                    <div class="products-toolbar-controls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div class="dashboard-search-container compact-search" style="margin-bottom:0; min-width:220px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="productSearchInput" class="dashboard-search-input" placeholder="Search products...">
+                        </div>
+                        <div class="custom-category-filter">
+                            <button class="category-filter-trigger" id="categoryFilterTrigger">
+                                <span class="selected-category-display">
+                                    <i class="fas fa-th"></i> All Products
+                                </span>
+                                <i class="fas fa-chevron-down category-filter-arrow"></i>
+                            </button>
+                            <div class="category-filter-dropdown" id="categoryFilterDropdown">
+                                <div class="category-filter-list">
+                                    <div class="category-option-filter active" data-category="">
+                                        <i class="fas fa-th"></i> All Products
+                                    </div>
+                                    <div class="category-option-filter" data-category="biscuit">
+                                        <i class="fas fa-cookie-bite"></i> Biscuit
+                                    </div>
+                                    <div class="category-option-filter" data-category="juice">
+                                        <i class="fas fa-glass-whiskey"></i> Juice
+                                    </div>
+                                    <div class="category-option-filter" data-category="food">
+                                        <i class="fas fa-utensils"></i> Food
+                                    </div>
+                                    <div class="category-option-filter" data-category="cool drink">
+                                        <i class="fas fa-mug-hot"></i> Cool Drink
+                                    </div>
+                                    <div class="category-option-filter" data-category="vegetables">
+                                        <i class="fas fa-leaf"></i> Vegetables
+                                    </div>
+                                    <div class="category-option-filter" data-category="fruits">
+                                        <i class="fas fa-apple-alt"></i> Fruits
+                                    </div>
+                                    <div class="category-option-filter" data-category="medicines">
+                                        <i class="fas fa-pills"></i> Medicines
+                                    </div>
+                                    <div class="category-option-filter" data-category="cleaning essential">
+                                        <i class="fas fa-spray-can"></i> Cleaning Essential
+                                    </div>
+                                    <div class="category-option-filter" data-category="personal care">
+                                        <i class="fas fa-spa"></i> Personal Care
+                                    </div>
+                                    <div class="category-option-filter" data-category="grocery items">
+                                        <i class="fas fa-shopping-basket"></i> Grocery Items
+                                    </div>
+                                    <div class="category-option-filter" data-category="chips">
+                                        <i class="fas fa-fire"></i> Chips
+                                    </div>
+                                    <div class="category-option-filter" data-category="chocolate">
+                                        <i class="fas fa-candy-cane"></i> Chocolate
+                                    </div>
+                                    <div class="category-option-filter" data-category="others">
+                                        <i class="fas fa-box-open"></i> Others
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -106,8 +106,12 @@
 
         <!-- Transactions Table -->
         <section class="card">
-            <div class="card-header">
+            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
                 <h3>Transaction History</h3>
+                <div class="dashboard-search-container compact-search" style="margin-bottom:0; min-width:240px;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="reportSearchInput" class="dashboard-search-input" placeholder="Search transactions...">
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
