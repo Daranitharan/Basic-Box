@@ -1014,6 +1014,139 @@ select {
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.custom-select-wrap {
+    position: relative;
+}
+
+.custom-select {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.custom-select-trigger.open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.custom-select-trigger span {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.custom-select-trigger i {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+}
+
+.custom-select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    display: none;
+    background: rgba(18, 20, 28, 0.96);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.custom-select-menu.open {
+    display: block;
+}
+
+.custom-select-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-select-search i {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+}
+
+.custom-select-search input {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    font-size: 0.85rem;
+    min-height: unset;
+    padding: 0;
+}
+
+.custom-select-options {
+    max-height: 250px;
+    overflow-y: auto;
+    background: rgba(18, 20, 28, 0.96);
+}
+
+.custom-option {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.custom-option:hover,
+.custom-option:focus {
+    background: rgba(99, 163, 255, 0.18);
+    outline: none;
+}
+
+.custom-option.empty {
+    color: var(--text-faint);
+    cursor: default;
+}
+
+.custom-select-options::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.12);
+    border-radius: 999px;
+}
+
+.custom-select-options .custom-option.selected {
+    background: rgba(96, 165, 250, 0.30);
+    color: var(--text);
+}
+
 .form-group input::placeholder {
     color: var(--text-faint);
 }

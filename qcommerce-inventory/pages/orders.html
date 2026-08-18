@@ -511,11 +511,22 @@
                 <div class="form-group">
                     <label style="margin-bottom: 10px; display:block;">Order Items *</label>
                     <div class="add-item-row">
-                        <div class="form-group">
+                        <div class="form-group custom-select-wrap">
                             <label style="font-size:0.75rem;">Product (shows cost price)</label>
-                            <select id="itemProduct" style="width:100%;padding:10px 12px;background:var(--input-bg);border:1px solid var(--card-border);border-radius:10px;font-family:'Inter',sans-serif;color:var(--text);font-size:0.85rem;">
-                                <option value="">Select product...</option>
-                            </select>
+                            <div class="custom-select" id="itemProductSelect">
+                                <button type="button" class="custom-select-trigger" id="itemProductTrigger">
+                                    <span>Select product...</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="custom-select-menu" id="itemProductMenu">
+                                    <div class="custom-select-search">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="itemProductSearch" placeholder="Search products..." />
+                                    </div>
+                                    <div class="custom-select-options" id="itemProductOptions"></div>
+                                </div>
+                                <input type="hidden" id="itemProduct" />
+                            </div>
                         </div>
                         <div class="form-group" style="width:70px;">
                             <label style="font-size:0.75rem;">Qty</label>

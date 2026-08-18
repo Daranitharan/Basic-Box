@@ -235,25 +235,98 @@ function updateOrderTypeUI() {
 // ── Product dropdown ──────────────────────────────────────────
 async function populateProductDropdown() {
     const [products, purchases] = await Promise.all([DB.getProducts(), DB.getPurchases()]);
-    const sel = document.getElementById('itemProduct');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">Select product...</option>';
-    products.forEach(p => {
-        const stock     = p.currentStock ?? p.stock ?? 0;
+    const container = document.getElementById('itemProductOptions');
+    const hiddenInput = document.getElementById('itemProduct');
+    const trigger = document.getElementById('itemProductTrigger');
+    const search = document.getElementById('itemProductSearch');
+    if (!container || !hiddenInput || !trigger) return;
+
+    const productOptions = products.map(p => {
+        const stock = p.currentStock ?? p.stock ?? 0;
         const latestBuy = purchases
             .filter(b => b.productId === p.id)
             .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
         const costPrice = latestBuy ? Number(latestBuy.purchasePrice) : 0;
-        const opt = document.createElement('option');
-        opt.value            = p.id;
-        opt.dataset.name     = p.name;
-        opt.dataset.sku      = p.sku || '';
-        opt.dataset.unit     = p.unit;
-        opt.dataset.stock    = stock;
-        opt.dataset.cost     = costPrice;
-        opt.textContent      = `${p.name} — ₹${costPrice.toFixed(2)} cost (${stock} ${p.unit})`;
-        sel.appendChild(opt);
+        return {
+            id: p.id,
+            name: p.name,
+            sku: p.sku || '',
+            unit: p.unit,
+            stock,
+            cost: costPrice,
+            label: `${p.name} — ₹${costPrice.toFixed(2)} cost (${stock} ${p.unit})`
+        };
     });
+
+    const renderOptions = (filter = '') => {
+        const q = filter.trim().toLowerCase();
+        const filtered = productOptions.filter(option =>
+            option.label.toLowerCase().includes(q) ||
+            option.name.toLowerCase().includes(q) ||
+            option.sku.toLowerCase().includes(q)
+        );
+
+        if (!filtered.length) {
+            container.innerHTML = '<div class="custom-option empty">No products found</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(option => `
+            <button type="button" class="custom-option" data-id="${option.id}" data-name="${option.name}" data-sku="${option.sku}" data-unit="${option.unit}" data-stock="${option.stock}" data-cost="${option.cost}">
+                <span>${option.label}</span>
+            </button>
+        `).join('');
+
+        container.querySelectorAll('.custom-option:not(.empty)').forEach(button => {
+            button.addEventListener('click', () => {
+                const selected = {
+                    id: button.dataset.id,
+                    name: button.dataset.name,
+                    sku: button.dataset.sku,
+                    unit: button.dataset.unit,
+                    stock: button.dataset.stock,
+                    cost: button.dataset.cost,
+                };
+
+                hiddenInput.value = selected.id;
+                hiddenInput.dataset.name = selected.name;
+                hiddenInput.dataset.sku = selected.sku;
+                hiddenInput.dataset.unit = selected.unit;
+                hiddenInput.dataset.stock = selected.stock;
+                hiddenInput.dataset.cost = selected.cost;
+                trigger.querySelector('span').textContent = selected.name + ' — ₹' + Number(selected.cost).toFixed(2) + ' cost';
+                trigger.classList.remove('open');
+                document.getElementById('itemProductMenu')?.classList.remove('open');
+                search.value = '';
+                renderOptions();
+            });
+        });
+    };
+
+    renderOptions();
+
+    trigger.addEventListener('click', () => {
+        const menu = document.getElementById('itemProductMenu');
+        const isOpen = menu?.classList.contains('open');
+        menu?.classList.toggle('open', !isOpen);
+        trigger.classList.toggle('open', !isOpen);
+        if (!isOpen && search) search.focus();
+    });
+
+    search?.addEventListener('input', (e) => renderOptions(e.target.value));
+
+    document.addEventListener('click', (event) => {
+        const select = document.getElementById('itemProductSelect');
+        const menu = document.getElementById('itemProductMenu');
+        if (!select?.contains(event.target)) {
+            menu?.classList.remove('open');
+            trigger.classList.remove('open');
+        }
+    });
+
+    if (!hiddenInput.value) {
+        trigger.querySelector('span').textContent = 'Select product...';
+    }
 }
 
 // ── Modal ─────────────────────────────────────────────────────
@@ -277,10 +350,9 @@ function addItemToOrder() {
     const selEl  = document.getElementById('itemProduct');
     const qty    = parseInt(document.getElementById('itemQty').value) || 1;
     const price  = parseFloat(document.getElementById('itemPrice').value) || 0;
-    const selOpt = selEl?.options[selEl.selectedIndex];
     if (!selEl?.value) { showToast('Please select a product', 'error'); return; }
 
-    const costPrice = parseFloat(selOpt.dataset.cost) || 0;
+    const costPrice = parseFloat(selEl.dataset.cost) || 0;
     const existing  = orderItems.find(i => i.productId === selEl.value);
     if (existing) {
         existing.qty   += qty;
@@ -288,10 +360,10 @@ function addItemToOrder() {
     } else {
         orderItems.push({
             productId:   selEl.value,
-            productName: selOpt.dataset.name,
-            sku:         selOpt.dataset.sku,
-            unit:        selOpt.dataset.unit,
-            availStock:  parseInt(selOpt.dataset.stock) || 0,
+            productName: selEl.dataset.name,
+            sku:         selEl.dataset.sku,
+            unit:        selEl.dataset.unit,
+            availStock:  parseInt(selEl.dataset.stock) || 0,
             costPrice,
             qty,
             price,
@@ -301,6 +373,12 @@ function addItemToOrder() {
     renderItemsList();
     updateOrderSummary();
     selEl.value = '';
+    selEl.removeAttribute('data-name');
+    selEl.removeAttribute('data-sku');
+    selEl.removeAttribute('data-unit');
+    selEl.removeAttribute('data-stock');
+    selEl.removeAttribute('data-cost');
+    document.getElementById('itemProductTrigger').querySelector('span').textContent = 'Select product...';
     document.getElementById('itemQty').value  = '1';
     document.getElementById('itemPrice').value = '';
 }
