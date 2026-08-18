@@ -325,15 +325,19 @@ function renderRecentTransactions(purchases, orders, todayStr) {
     const recentDiv = document.getElementById('recent-transactions');
     if (!recentDiv) return;
 
-    const todayPurchases = purchases.filter(p => new Date(p.date).toDateString() === todayStr);
-    const todayOrders    = orders.filter(o =>
+    // Show last 7 days of transactions instead of today only
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentPurchases = purchases.filter(p => new Date(p.date) >= sevenDaysAgo);
+    const recentOrders    = orders.filter(o =>
         (o.status === 'completed' || o.status === 'new' || o.status === 'preparing') &&
-        new Date(o.date).toDateString() === todayStr
+        new Date(o.date) >= sevenDaysAgo
     );
 
     const all = [
-        ...todayPurchases.map(p => ({ ...p, type: 'purchase' })),
-        ...todayOrders.map(o => ({
+        ...recentPurchases.map(p => ({ ...p, type: 'purchase' })),
+        ...recentOrders.map(o => ({
             ...o,
             type: 'order',
             productName: (o.items || []).map(i => i.productName).join(', '),
@@ -343,7 +347,7 @@ function renderRecentTransactions(purchases, orders, todayStr) {
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     if (all.length === 0) {
-        recentDiv.innerHTML = '<p class="empty-text">No transactions today.</p>';
+        recentDiv.innerHTML = '<p class="empty-text">No recent transactions.</p>';
         return;
     }
 
