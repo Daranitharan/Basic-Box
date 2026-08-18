@@ -3,14 +3,15 @@
 let isRefreshing       = false;
 let salesChartInstance = null;
 
-const STATUS_CONFIG = {
-    new:       { label: 'New',              icon: 'fa-inbox',       color: '#3b82f6', next: 'preparing' },
-    preparing: { label: 'Preparing',        icon: 'fa-fire',        color: '#d97706', next: 'ready'     },
-    ready:     { label: 'Ready',            icon: 'fa-check',       color: '#8b5cf6', next: 'delivery'  },
-    delivery:  { label: 'Out for Delivery', icon: 'fa-motorcycle',  color: '#0ea5e9', next: 'completed' },
-    completed: { label: 'Completed',        icon: 'fa-check-circle',color: '#16a34a', next: null        },
-    cancelled: { label: 'Cancelled',        icon: 'fa-times-circle',color: '#dc2626', next: null        },
+const STATUS_CONFIG = window.STATUS_CONFIG || {
+    new:       { label: 'New',              icon: 'fa-inbox',        color: '#3b82f6', next: 'preparing' },
+    preparing: { label: 'Preparing',        icon: 'fa-fire',         color: '#d97706', next: 'ready'     },
+    ready:     { label: 'Ready',            icon: 'fa-check',        color: '#8b5cf6', next: 'delivery'  },
+    delivery:  { label: 'Out for Delivery', icon: 'fa-motorcycle',   color: '#0ea5e9', next: 'completed' },
+    completed: { label: 'Completed',        icon: 'fa-check-circle', color: '#16a34a', next: null        },
+    cancelled: { label: 'Cancelled',        icon: 'fa-times-circle', color: '#dc2626', next: null        },
 };
+window.STATUS_CONFIG = STATUS_CONFIG;
 
 // ── Boot ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {

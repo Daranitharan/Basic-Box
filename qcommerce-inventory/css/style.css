@@ -1306,7 +1306,10 @@ textarea:focus {
 }
 
 /* ========== REPORT SPECIFIC ========== */
-.period-select {
+.period-select,
+.filter-select,
+.settings-select,
+.chart-month-select {
     padding: 10px 14px;
     background: var(--card-bg);
     backdrop-filter: blur(12px);
@@ -1318,14 +1321,28 @@ textarea:focus {
     font-family: 'Inter', sans-serif;
     color: var(--text);
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-faint) 50%), linear-gradient(135deg, var(--text-faint) 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
 }
 
-[data-theme="dark"] .period-select {
+[data-theme="dark"] .period-select,
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] .settings-select,
+[data-theme="dark"] .chart-month-select {
     color-scheme: dark;
 }
 
-.period-select:focus {
+.period-select:focus,
+.filter-select:focus,
+.settings-select:focus,
+.chart-month-select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
@@ -2112,7 +2129,15 @@ body.auth-page {
     font-family: 'Inter', sans-serif;
     color: var(--text);
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-faint) 50%), linear-gradient(135deg, var(--text-faint) 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
 }
 
 [data-theme="dark"] .filter-select { color-scheme: dark; }
