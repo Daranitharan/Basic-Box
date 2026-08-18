@@ -352,9 +352,6 @@
                             <button class="btn btn-danger" id="deleteSelectedNotifBtn" style="font-size:0.82rem; padding:8px 14px; display:none;">
                                 <i class="fas fa-trash"></i> Delete selected
                             </button>
-                            <button class="btn btn-secondary" id="clearNotifsBtn" style="font-size:0.82rem; padding:8px 14px;">
-                                <i class="fas fa-check-double"></i> Mark all read
-                            </button>
                         </div>
                     </div>
                     <div class="dashboard-search-container compact-search" style="margin-top:12px; margin-bottom:0; width:100%; max-width:100%; min-width:0;">
@@ -362,12 +359,17 @@
                         <input type="text" id="notificationSearch" class="dashboard-search-input" placeholder="Search messages...">
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding-top:12px;">
                     <div class="notif-list" id="notifList">
                         <div class="empty-notif">
                             <i class="fas fa-spinner fa-spin"></i>
                             <p>Loading notifications...</p>
                         </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                        <button class="btn btn-secondary" id="clearNotifsBtn" style="font-size:0.82rem; padding:8px 14px;">
+                            <i class="fas fa-check-double"></i> Mark all read
+                        </button>
                     </div>
                 </div>
             </section>
