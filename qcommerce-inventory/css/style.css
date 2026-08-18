@@ -710,17 +710,17 @@ body {
 }
 
 .custom-dropdown-option.selected {
-    background: rgba(59,130,246,0.12);
-    color: #3b82f6;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
     font-weight: 600;
 }
 
 [data-theme="dark"] .custom-dropdown-option.selected {
-    background: rgba(59,130,246,0.18);
+    background: var(--accent-soft);
 }
 
 .custom-dropdown-option.selected i {
-    color: #3b82f6;
+    color: var(--accent-strong);
 }
 
 /* ========== CUSTOM DATE PICKER ========== */
@@ -870,8 +870,8 @@ body {
 }
 
 .date-day.selected {
-    background: rgba(59,130,246,0.15);
-    color: #3b82f6;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
     font-weight: 600;
 }
 
@@ -1500,7 +1500,8 @@ select {
 
 .custom-option:hover,
 .custom-option:focus {
-    background: rgba(99, 163, 255, 0.18);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
     outline: none;
 }
 
@@ -1519,8 +1520,9 @@ select {
 }
 
 .custom-select-options .custom-option.selected {
-    background: rgba(96, 165, 250, 0.30);
-    color: var(--text);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-weight: 600;
 }
 
 .form-group input::placeholder {
@@ -1805,7 +1807,8 @@ textarea:focus {
 
 .recent-range-option:hover,
 .recent-range-option.active {
-    background: rgba(96,165,250,0.22);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
 }
 
 .compact-search {
