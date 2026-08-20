@@ -1,8 +1,17 @@
 -- ============================================================
---  STEP 1: CLEANUP - Remove any existing tables
+--  STEP 1: CLEANUP - Remove existing objects
 --  Copy and paste this FIRST, then click "Run"
 -- ============================================================
 
+-- Drop triggers first (IMPORTANT: prevents "already exists" errors)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS products_updated_at ON public.products;
+
+-- Drop functions
+DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at() CASCADE;
+
+-- Drop tables
 DROP TABLE IF EXISTS public.stock_adjustments CASCADE;
 DROP TABLE IF EXISTS public.customers CASCADE;
 DROP TABLE IF EXISTS public.sales CASCADE;
@@ -18,8 +27,6 @@ DROP TABLE IF EXISTS public.delivery_partners CASCADE;
 DROP TABLE IF EXISTS public.commission_settings CASCADE;
 DROP TABLE IF EXISTS public.commission_ledger CASCADE;
 DROP TABLE IF EXISTS public.returns CASCADE;
-
--- Wait for "Success. No rows returned" message, then continue to Step 2
 
 
 -- ============================================================
@@ -140,26 +147,32 @@ ALTER TABLE public.stock_adjustments ENABLE ROW LEVEL SECURITY;
 -- ══════════════════════════════════════════════════════════
 
 -- Users policies
+DROP POLICY IF EXISTS "users_own" ON public.users;
 CREATE POLICY "users_own" ON public.users 
     FOR ALL USING (auth.uid() = id);
 
 -- Products policies
+DROP POLICY IF EXISTS "products_own" ON public.products;
 CREATE POLICY "products_own" ON public.products 
     FOR ALL USING (auth.uid() = user_id);
 
 -- Purchases policies
+DROP POLICY IF EXISTS "purchases_own" ON public.purchases;
 CREATE POLICY "purchases_own" ON public.purchases 
     FOR ALL USING (auth.uid() = user_id);
 
 -- Sales policies
+DROP POLICY IF EXISTS "sales_own" ON public.sales;
 CREATE POLICY "sales_own" ON public.sales 
     FOR ALL USING (auth.uid() = user_id);
 
 -- Orders policies
+DROP POLICY IF EXISTS "orders_own" ON public.orders;
 CREATE POLICY "orders_own" ON public.orders 
     FOR ALL USING (auth.uid() = user_id);
 
 -- Stock adjustments policies
+DROP POLICY IF EXISTS "adjustments_own" ON public.stock_adjustments;
 CREATE POLICY "adjustments_own" ON public.stock_adjustments 
     FOR ALL USING (auth.uid() = user_id);
 
