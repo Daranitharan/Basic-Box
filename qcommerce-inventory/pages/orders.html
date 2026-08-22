@@ -371,6 +371,19 @@
             </div>
             <div><h2>Billaxis</h2><p>Merchant Dashboard</p></div>
         </div>
+        
+        <!-- Live/Offline Toggle -->
+        <div class="live-toggle-container">
+            <div class="toggle-label-row">
+                <span class="toggle-status-text" id="toggleStatusText">Live</span>
+                <label class="live-toggle-switch">
+                    <input type="checkbox" id="liveToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <p class="toggle-subtitle" id="toggleSubtitle">Accepting new orders</p>
+        </div>
+        
         <nav class="sidebar-nav">
             <a href="../merchant.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
             <a href="orders.html" class="nav-item active"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
@@ -406,6 +419,15 @@
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
             </div>
         </header>
+
+        <!-- Offline Warning Banner -->
+        <div class="store-closed-banner" id="offlineBanner" style="display:none;">
+            <i class="fas fa-power-off"></i>
+            <div class="store-closed-banner-text">
+                <h4>Store is Offline — Not accepting new orders</h4>
+                <p>Turn the toggle in the sidebar to "Live" to start accepting orders again.</p>
+            </div>
+        </div>
 
         <!-- Status Overview Cards -->
         <section class="stats-grid" style="margin-bottom: 20px;" id="orderStatsGrid">
@@ -615,6 +637,7 @@
     <script src="../js/db.js"></script>
     <script src="../js/toast.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/live-toggle.js"></script>
     <script src="../js/realtime-orders.js"></script>
     <script src="../js/orders.js"></script>
 </body>

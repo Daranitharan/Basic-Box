@@ -112,6 +112,19 @@
                 <p>Merchant Dashboard</p>
             </div>
         </div>
+        
+        <!-- Live/Offline Toggle -->
+        <div class="live-toggle-container">
+            <div class="toggle-label-row">
+                <span class="toggle-status-text" id="toggleStatusText">Live</span>
+                <label class="live-toggle-switch">
+                    <input type="checkbox" id="liveToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <p class="toggle-subtitle" id="toggleSubtitle">Accepting new orders</p>
+        </div>
+        
         <nav class="sidebar-nav">
     <a href="merchant.html" class="nav-item active"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
     <a href="pages/orders.html" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
@@ -295,6 +308,7 @@
     <script src="js/db.js?v=20260818-1"></script>
     <script src="js/toast.js?v=20260818-1"></script>
     <script src="js/auth.js?v=20260818-1"></script>
+    <script src="js/live-toggle.js?v=20260822-1"></script>
     <script src="js/realtime-orders.js?v=20260818-1"></script>
     <script src="js/app.js?v=20260818-1"></script>
 
