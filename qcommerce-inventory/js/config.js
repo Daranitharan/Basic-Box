@@ -21,22 +21,29 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ── Internal check ──────────────────────────────────────────
 // Returns true when Supabase credentials are valid
 function supabaseConfigured() {
-    // Check if URL and key are valid (not empty/placeholder)
-    const isConfigured = (
-        SUPABASE_URL &&
-        SUPABASE_ANON_KEY &&
-        SUPABASE_URL.startsWith('https://') &&
-        SUPABASE_URL.includes('supabase.co') &&
-        SUPABASE_ANON_KEY.length > 100 &&
-        !SUPABASE_URL.includes('YOUR-PROJECT') &&
-        !SUPABASE_ANON_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqdmlnaXJwa3JpZWt5dWJxaWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNDIwODUsImV4cCI6MjEwMTkxODA4NX0.C0lBEAglS_61BaKxjtcviMAPK6IWtaNQi4fd9EInL3c')
-    );
+    // Check each condition individually for debugging
+    const hasURL = !!SUPABASE_URL;
+    const hasKey = !!SUPABASE_ANON_KEY;
+    const validHTTPS = SUPABASE_URL && SUPABASE_URL.startsWith('https://');
+    const hasSupabase = SUPABASE_URL && SUPABASE_URL.includes('supabase.co');
+    const keyLongEnough = SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 100;
+    const notPlaceholderURL = SUPABASE_URL && !SUPABASE_URL.includes('YOUR-PROJECT');
+    const notPlaceholderKey = SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('YOUR_ANON');
     
-    // Log configuration status for debugging
-    console.log('✅ Supabase Configuration Check:');
+    const isConfigured = hasURL && hasKey && validHTTPS && hasSupabase && keyLongEnough && notPlaceholderURL && notPlaceholderKey;
+    
+    // Detailed debug logging
+    console.log('🔍 Supabase Configuration Debug:');
     console.log('   URL:', SUPABASE_URL);
-    console.log('   Key length:', SUPABASE_ANON_KEY.length, 'characters');
-    console.log('   Configured:', isConfigured ? '✅ YES' : '❌ NO');
+    console.log('   Key length:', SUPABASE_ANON_KEY ? SUPABASE_ANON_KEY.length : 0, 'characters');
+    console.log('   ✓ Has URL:', hasURL);
+    console.log('   ✓ Has Key:', hasKey);
+    console.log('   ✓ Valid HTTPS:', validHTTPS);
+    console.log('   ✓ Has supabase.co:', hasSupabase);
+    console.log('   ✓ Key length > 100:', keyLongEnough);
+    console.log('   ✓ Not placeholder URL:', notPlaceholderURL);
+    console.log('   ✓ Not placeholder Key:', notPlaceholderKey);
+    console.log('   📊 RESULT:', isConfigured ? '✅ CONFIGURED' : '❌ NOT CONFIGURED');
     
     return isConfigured;
 }
