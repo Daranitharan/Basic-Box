@@ -184,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: productName,
                 unit: document.getElementById('unit').value,
                 minStock: Number(document.getElementById('minStock').value) || 0,
-                openingStock: existingProduct?.openingStock || 0,
                 currentStock: currentStockValue,
                 stock: currentStockValue,
                 supplier: document.getElementById('supplier').value.trim(),
