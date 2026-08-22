@@ -29,7 +29,7 @@ function supabaseConfigured() {
         SUPABASE_URL.includes('supabase.co') &&
         SUPABASE_ANON_KEY.length > 100 &&
         !SUPABASE_URL.includes('YOUR-PROJECT') &&
-        !SUPABASE_ANON_KEY.includes('YOUR_ANON')
+        !SUPABASE_ANON_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqdmlnaXJwa3JpZWt5dWJxaWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNDIwODUsImV4cCI6MjEwMTkxODA4NX0.C0lBEAglS_61BaKxjtcviMAPK6IWtaNQi4fd9EInL3c')
     );
     
     // Log configuration status for debugging
