@@ -22,7 +22,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Returns true when Supabase credentials are valid
 function supabaseConfigured() {
     // Check if URL and key are valid (not empty/placeholder)
-    return (
+    const isConfigured = (
         SUPABASE_URL &&
         SUPABASE_ANON_KEY &&
         SUPABASE_URL.startsWith('https://') &&
@@ -31,4 +31,12 @@ function supabaseConfigured() {
         !SUPABASE_URL.includes('YOUR-PROJECT') &&
         !SUPABASE_ANON_KEY.includes('YOUR_ANON')
     );
+    
+    // Log configuration status for debugging
+    console.log('✅ Supabase Configuration Check:');
+    console.log('   URL:', SUPABASE_URL);
+    console.log('   Key length:', SUPABASE_ANON_KEY.length, 'characters');
+    console.log('   Configured:', isConfigured ? '✅ YES' : '❌ NO');
+    
+    return isConfigured;
 }

@@ -36,6 +36,7 @@ function toSnake(obj) {
         userId:        'user_id',
         minStock:      'min_stock',
         currentStock:  'current_stock',
+        stock:         'current_stock',  // Map 'stock' to 'current_stock'
         purchasePrice: 'purchase_price',
         totalCost:     'total_cost',
         sellingPrice:  'selling_price',
@@ -46,7 +47,12 @@ function toSnake(obj) {
     };
     const result = {};
     Object.keys(obj).forEach(k => {
-        result[map[k] || k] = obj[k];
+        const mappedKey = map[k] || k;
+        // Skip if we already have current_stock and we're trying to add stock
+        if (mappedKey === 'current_stock' && result.current_stock !== undefined && k === 'stock') {
+            return;
+        }
+        result[mappedKey] = obj[k];
     });
     return result;
 }
@@ -71,6 +77,10 @@ function toCamel(obj) {
     Object.keys(obj).forEach(k => {
         result[map[k] || k] = obj[k];
     });
+    // Add 'stock' as alias for 'currentStock' for backwards compatibility
+    if (result.currentStock !== undefined) {
+        result.stock = result.currentStock;
+    }
     return result;
 }
 
@@ -116,6 +126,7 @@ const DB = {
 
         if (!sb) {
             // localStorage only
+            console.log('⚠️ Supabase not available, saving to localStorage');
             let products = Storage.get('products') || [];
             const idx = products.findIndex(p => p.id === product.id);
             if (idx !== -1) products[idx] = { ...products[idx], ...product };
@@ -125,13 +136,24 @@ const DB = {
         }
 
         const uid = await getSupabaseUserId();
+        console.log('💾 Saving product to Supabase...');
+        console.log('   User ID:', uid);
+        console.log('   Product:', product);
+        
         const row = toSnake({ ...product, userId: uid });
+        console.log('   Converted row:', row);
 
         const { error } = await sb
             .from('products')
             .upsert(row, { onConflict: 'id' });
 
-        if (error) { console.error('DB.saveProduct:', error); return { ok: false, error }; }
+        if (error) { 
+            console.error('❌ DB.saveProduct ERROR:', error);
+            console.error('   Error details:', JSON.stringify(error, null, 2));
+            return { ok: false, error }; 
+        }
+
+        console.log('✅ Product saved to Supabase successfully!');
 
         // Update local cache
         let products = Storage.get('products') || [];
